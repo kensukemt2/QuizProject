@@ -1,72 +1,76 @@
 // src/store/modules/auth.js
 import axios from 'axios';
 
-const state = {
-  token: localStorage.getItem('token') || '',
-  user: JSON.parse(localStorage.getItem('user') || 'null'),
-  status: ''
-};
-
-const getters = {
-  isAuthenticated: state => !!state.token,
-  authStatus: state => state.status,
-  user: state => state.user
-};
+const state = () => ({
+  token: localStorage.getItem('token') || null,
+  user: null
+});
 
 const actions = {
   // ログイン
-  async login({ commit }, user) {
-    commit('auth_request');
+  async login({ commit, dispatch }, credentials) {
     try {
-      const response = await axios.post('http://localhost:8000/api/token/', {
-        username: user.username,
-        password: user.password
+      // APIへのリクエスト例
+      const response = await fetch('http://localhost:8000/api/token/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials)
       });
-      const token = response.data.access;
-      const refreshToken = response.data.refresh;
       
+      if (!response.ok) {
+        throw new Error('ログインに失敗しました');
+      }
+      
+      const data = await response.json();
+      const token = data.access;
+      
+      // トークンをローカルストレージとステートに保存
       localStorage.setItem('token', token);
-      localStorage.setItem('refresh_token', refreshToken);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      commit('SET_TOKEN', token);
       
-      // ユーザープロフィール取得
-      const userResponse = await axios.get('http://localhost:8000/api/profile/');
-      const userData = userResponse.data;
-      localStorage.setItem('user', JSON.stringify(userData));
+      // ユーザー情報を取得（オプション）
+      await dispatch('fetchUserProfile');
       
-      commit('auth_success', { token, user: userData });
-      return response;
-    } catch (err) {
-      commit('auth_error');
-      localStorage.removeItem('token');
-      localStorage.removeItem('refresh_token');
-      throw err;
+      return true;
+    } catch (error) {
+      console.error('ログインエラー:', error);
+      return false;
     }
   },
   
   // 登録
-  async register({ commit }, userData) {
-    commit('auth_request');
+  async register(_, userData) {
     try {
-      await axios.post('http://localhost:8000/api/register/', userData);
-      commit('register_success');
+      // APIへのリクエスト
+      const response = await fetch('http://localhost:8000/api/register/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw { response: { data: errorData } };
+      }
+      
       return true;
-    } catch (err) {
-      commit('auth_error', err);
-      throw err;
+    } catch (error) {
+      console.error('登録エラー:', error);
+      throw error;
     }
   },
   
   // ログアウト
-  logout({ commit }) {
-    return new Promise((resolve) => {
-      commit('logout');
-      localStorage.removeItem('token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
-      delete axios.defaults.headers.common['Authorization'];
-      resolve();
-    });
+  async logout({ commit }) {
+    commit('CLEAR_AUTH');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    delete axios.defaults.headers.common['Authorization'];
   },
   
   // トークンリフレッシュ
@@ -115,13 +119,26 @@ const mutations = {
   },
   refresh_token(state, token) {
     state.token = token;
+  },
+  SET_TOKEN(state, token) {
+    state.token = token;
+  },
+  SET_USER(state, user) {
+    state.user = user;
+  },
+  CLEAR_AUTH(state) {
+    state.token = null;
+    state.user = null;
   }
 };
 
 export default {
   namespaced: true,
   state,
-  getters,
+  getters: {
+    isAuthenticated: state => !!state.token,
+    currentUser: state => state.user
+  },
   actions,
   mutations
 };

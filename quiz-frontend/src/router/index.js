@@ -1,65 +1,61 @@
 // src/router/index.js
-import Vue from 'vue';
-import VueRouter from 'vue-router';
-import store from '@/store';
+import { createRouter, createWebHistory } from 'vue-router';
+import store from '../store';
 
-import Home from '@/views/Home.vue';
-import Login from '@/views/Login.vue';
-import Register from '@/views/Register.vue';
-import Quiz from '@/views/Quiz.vue';
-import History from '@/views/History.vue';
-import Leaderboard from '@/views/Leaderboard.vue';
-import Profile from '@/views/Profile.vue';
-
-Vue.use(VueRouter);
+import HomePage from '../components/Home.vue';
+import LoginComponent from '../components/Login.vue';
+import RegisterPage from '../components/Register.vue';
+import QuizComponent from '../components/Quiz.vue';
+import HistoryComponent from '../components/History.vue';
+import LeaderboardComponent from '../components/Leaderboard.vue';
+import ProfileComponent from '../components/Profile.vue';
 
 const routes = [
   {
-    path: '/',
-    name: 'home',
-    component: Home
+   path: '/',
+   name: 'home',
+   component: HomePage
   },
   {
     path: '/login',
     name: 'login',
-    component: Login,
+    component: LoginComponent,
     meta: { guestOnly: true }
   },
   {
     path: '/register',
     name: 'register',
-    component: Register,
+    component: RegisterPage,
     meta: { guestOnly: true }
   },
   {
     path: '/quiz',
     name: 'quiz',
-    component: Quiz,
+    component: QuizComponent,
     meta: { requiresAuth: true }
   },
   {
     path: '/history',
     name: 'history',
-    component: History,
+    component: HistoryComponent,
     meta: { requiresAuth: true }
   },
   {
     path: '/leaderboard',
     name: 'leaderboard',
-    component: Leaderboard,
+    component: LeaderboardComponent,
     meta: { requiresAuth: true }
   },
   {
     path: '/profile',
     name: 'profile',
-    component: Profile,
+    component: ProfileComponent,
     meta: { requiresAuth: true }
   }
 ];
 
-const router = new VueRouter({
-  mode: 'history',
-  base: process.env.BASE_URL,
+const router = createRouter({
+  history: createWebHistory(process.env.BASE_URL),
   routes
 });
 
@@ -91,6 +87,5 @@ router.beforeEach((to, from, next) => {
 });
 
 export default router;
-//プロフィールとパフォーマンス統計
 
 
