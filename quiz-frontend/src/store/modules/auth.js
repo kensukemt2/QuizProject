@@ -43,8 +43,11 @@ const actions = {
   // 登録
   async register(_, userData) {
     try {
-      // APIへのリクエスト
-      const response = await fetch('http://localhost:8000/api/register/', {
+      console.log('APIリクエストを送信します:', userData);
+      
+      const API_URL = 'http://localhost:8000';
+      
+      const response = await fetch(`${API_URL}/api/register/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,15 +55,19 @@ const actions = {
         body: JSON.stringify(userData)
       });
       
+      console.log('APIレスポンス:', response);
+      
       if (!response.ok) {
         const errorData = await response.json();
-        throw { response: { data: errorData } };
+        console.error('サーバーエラー:', errorData);
+        // エラーオブジェクトにデータを含めて投げる
+        throw { response: { data: errorData, message: 'ユーザー登録に失敗しました' } };
       }
       
       return true;
     } catch (error) {
       console.error('登録エラー:', error);
-      throw error;
+      throw error; // エラーを上位に伝播させる
     }
   },
   
@@ -132,13 +139,17 @@ const mutations = {
   }
 };
 
+const getters = {
+  isAuthenticated: state => !!state.token,
+  currentUser: state => state.user,
+  // 別名として user ゲッターも追加（互換性のため）
+  user: state => state.user
+};
+
 export default {
   namespaced: true,
   state,
-  getters: {
-    isAuthenticated: state => !!state.token,
-    currentUser: state => state.user
-  },
+  getters,
   actions,
   mutations
 };

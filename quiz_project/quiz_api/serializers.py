@@ -75,35 +75,39 @@ class QuizAttemptSerializer(serializers.ModelSerializer):
     def get_category_name(self, obj):
         return obj.category.name
 
+class ResponseSerializer(serializers.Serializer):
+    question_id = serializers.IntegerField()
+    selected_choice_id = serializers.IntegerField()
+    is_correct = serializers.BooleanField()
+
 class SaveQuizResultSerializer(serializers.Serializer):
     category_id = serializers.IntegerField()
     score = serializers.IntegerField()
     total_questions = serializers.IntegerField()
-    responses = serializers.ListField(
-        child=serializers.DictField(
-            child=serializers.Field()
-        )
-    )
+    responses = ResponseSerializer(many=True)  # ResponseSerializerのリスト
     
     def create(self, validated_data):
         user = self.context['request'].user
-        category_id = validated_data['category_id']
+        responses_data = validated_data.pop('responses')
+        
+        # スコアと質問数
         score = validated_data['score']
         total_questions = validated_data['total_questions']
-        responses = validated_data['responses']
         
-        # クイズ結果の保存
-        percentage = (score / total_questions) * 100 if total_questions > 0 else 0
+        # パーセンテージを計算
+        percentage = (score / total_questions * 100) if total_questions > 0 else 0
+        
+        # QuizAttemptの作成（percentageフィールドを含める）
         quiz_attempt = QuizAttempt.objects.create(
             user=user,
-            category_id=category_id,
+            category_id=validated_data['category_id'],
             score=score,
             total_questions=total_questions,
-            percentage=percentage
+            percentage=percentage  # この行を追加
         )
         
-        # 質問ごとの回答を保存
-        for response_data in responses:
+        # 各回答の保存処理（オプション）
+        for response_data in responses_data:
             QuestionResponse.objects.create(
                 quiz_attempt=quiz_attempt,
                 question_id=response_data['question_id'],
@@ -112,25 +116,18 @@ class SaveQuizResultSerializer(serializers.Serializer):
             )
         
         return quiz_attempt
+
 # リーダーボード
 # quiz_api/serializers.py に追加
 class UserLeaderboardSerializer(serializers.ModelSerializer):
     total_attempts = serializers.IntegerField(read_only=True)
+    avg_score = serializers.FloatField(read_only=True)
     total_score = serializers.IntegerField(read_only=True)
-    total_questions = serializers.IntegerField(read_only=True)
-    avg_percentage = serializers.FloatField(read_only=True)
-    category_attempts = serializers.IntegerField(read_only=True, required=False)
-    category_score = serializers.IntegerField(read_only=True, required=False)
-    category_questions = serializers.IntegerField(read_only=True, required=False)
-    category_percentage = serializers.FloatField(read_only=True, required=False)
     
     class Meta:
         model = User
-        fields = [
-            'id', 'username', 'total_attempts', 'total_score', 'total_questions', 
-            'avg_percentage', 'category_attempts', 'category_score', 
-            'category_questions', 'category_percentage'
-        ]
+        fields = ['id', 'username', 'total_attempts', 'avg_score', 'total_score']
+
 #ユーザープロフィールとパフォーマンス統計
 # quiz_api/serializers.py に追加
 class UserStatsSerializer(serializers.Serializer):

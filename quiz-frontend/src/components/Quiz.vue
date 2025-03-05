@@ -70,10 +70,17 @@
 </template>
 
 <script>
+import { useToast } from 'vue-toastification';
 import axios from 'axios';
+import api from '../utils/api';
 
 export default {
-  name: 'QuizComponent',
+  name: 'QuizPage',
+  setup() {
+    // Composition APIでtoastを設定
+    const toast = useToast();
+    return { toast };
+  },
   data() {
     return {
       loading: true,
@@ -84,7 +91,9 @@ export default {
       answered: false,
       selectedChoice: null,
       correct: false,
-      quizCompleted: false
+      quizCompleted: false,
+      allAnswers: [],  // これを追加
+      selectedCategory: null  // これを追加
     };
   },
   computed: {
@@ -117,12 +126,17 @@ export default {
     async selectCategory(categoryId) {
       this.loading = true;
       try {
+        // カテゴリ情報を保存
+        const selectedCategory = this.categories.find(c => c.id === categoryId);
+        this.selectedCategory = selectedCategory;
+        
         const response = await axios.get(`http://localhost:8000/api/questions/?category=${categoryId}`);
         this.questions = this.shuffleArray(response.data);
         this.questionIndex = 0;
         this.score = 0;
         this.answered = false;
         this.quizCompleted = false;
+        this.allAnswers = [];  // 回答をリセット
         this.loading = false;
       } catch (error) {
         console.error('質問の取得に失敗しました:', error);
@@ -179,6 +193,14 @@ export default {
       if (!this.quizCompleted) return;
       
       try {
+        // Vuex ストアから認証トークンを取得
+        const token = this.$store.state.auth.token;
+        
+        if (!token) {
+          this.toast.error('認証エラー: ログインしてください');
+          return;
+        }
+        
         // レスポンスデータの準備
         const responseData = this.allAnswers.map(answer => ({
           question_id: answer.question.id,
@@ -186,20 +208,27 @@ export default {
           is_correct: answer.isCorrect
         }));
         
-        // 結果を保存
-        await axios.post('http://localhost:8000/api/quiz/save-result/', {
+        // 結果を保存（ヘッダーに認証トークンを追加）
+        await api.post('/api/quiz/save-result/', {
           category_id: this.selectedCategory.id,
           score: this.score,
           total_questions: this.questions.length,
           responses: responseData
         });
         
-        this.$toast.success('クイズ結果が保存されました！');
+        // 成功メッセージ
+        this.toast.success('クイズ結果が保存されました！');
       } catch (error) {
         console.error('結果の保存に失敗しました:', error);
-        this.$toast.error('結果の保存に失敗しました');
+        
+        // エラーに応じたメッセージ
+        if (error.response && error.response.status === 401) {
+          this.toast.error('認証エラー: 再ログインしてください');
+        } else {
+          this.toast.error('結果の保存に失敗しました');
+        }
       }
-    },
+    }
   },
   created() {
     this.fetchCategories();

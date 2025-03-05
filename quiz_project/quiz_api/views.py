@@ -64,56 +64,21 @@ class LeaderboardView(generics.ListAPIView):
     serializer_class = UserLeaderboardSerializer
     
     def get_queryset(self):
-        # カテゴリーによるフィルタリング（オプション）
-        category_id = self.request.query_params.get('category')
+        # クエリパラメータからカテゴリを取得
+        category = self.request.query_params.get('category')
         
-        # ユーザーとそのクイズ結果を集計
+        # ベースクエリ - ユーザーごとの結果集計
         queryset = User.objects.annotate(
-            total_attempts=Count('quiz_attempts', distinct=True),
-            total_score=Sum('quiz_attempts__score'),
-            total_questions=Sum('quiz_attempts__total_questions'),
-            avg_percentage=Round(
-                ExpressionWrapper(
-                    Avg('quiz_attempts__percentage'), 
-                    output_field=FloatField()
-                ), 
-                precision=1
-            )
-        ).filter(total_attempts__gt=0)
+            total_attempts=Count('quizattempt'),
+            avg_score=Avg('quizattempt__percentage'),
+            total_score=Sum('quizattempt__score')
+        ).order_by('-avg_score')  # 平均スコアで降順ソート
         
-        # カテゴリーフィルターが指定されている場合
-        if category_id:
-            queryset = queryset.annotate(
-                category_attempts=Count(
-                    'quiz_attempts', 
-                    filter=models.Q(quiz_attempts__category_id=category_id),
-                    distinct=True
-                ),
-                category_score=Sum(
-                    'quiz_attempts__score',
-                    filter=models.Q(quiz_attempts__category_id=category_id)
-                ),
-                category_questions=Sum(
-                    'quiz_attempts__total_questions',
-                    filter=models.Q(quiz_attempts__category_id=category_id)
-                ),
-                category_percentage=Round(
-                    ExpressionWrapper(
-                        Avg(
-                            'quiz_attempts__percentage',
-                            filter=models.Q(quiz_attempts__category_id=category_id)
-                        ), 
-                        output_field=FloatField()
-                    ), 
-                    precision=1
-                )
-            ).filter(category_attempts__gt=0)
-            
-            # カテゴリー内の成績でソート
-            return queryset.order_by('-category_percentage', '-category_score')
+        # カテゴリフィルター（'all'でない場合）
+        if category and category != 'all' and category.isdigit():
+            queryset = queryset.filter(quizattempt__category_id=category)
         
-        # 全体の成績でソート
-        return queryset.order_by('-avg_percentage', '-total_score')
+        return queryset
 #ユーザープロフィールとパフォーマンス統計
 # quiz_api/views.py に追加
 class UserStatsView(generics.RetrieveAPIView):

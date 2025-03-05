@@ -62,7 +62,7 @@
   </template>
   
   <script>
-  import axios from 'axios';
+  import api from '../utils/api';
   import { mapGetters } from 'vuex';
   
   export default {
@@ -70,13 +70,19 @@
     data() {
       return {
         leaderboardData: [],
-        categories: [],
-        selectedCategory: null,
-        loading: true
+        loading: true,
+        error: null,
+        selectedCategory: 'all'
       };
     },
     computed: {
       ...mapGetters('auth', ['user']),
+      isAuthenticated() {
+        return this.$store.getters['auth/isAuthenticated'];
+      },
+      currentUser() {
+        return this.$store.getters['auth/currentUser'];
+      },
       currentUserId() {
         return this.user ? this.user.id : null;
       },
@@ -87,6 +93,14 @@
         return userIndex !== -1 ? userIndex + 1 : null;
       }
     },
+    beforeMount() {
+      if (!this.isAuthenticated) {
+        this.$router.push({
+          path: '/login',
+          query: { redirect: '/leaderboard' }
+        });
+      }
+    },
     created() {
       this.fetchCategories();
       this.fetchLeaderboard();
@@ -94,27 +108,45 @@
     methods: {
       async fetchCategories() {
         try {
-          const response = await axios.get('http://localhost:8000/api/categories/');
+          const response = await api.get('/api/categories/');
           this.categories = response.data;
         } catch (error) {
           console.error('カテゴリの取得に失敗しました:', error);
         }
       },
       async fetchLeaderboard() {
-        this.loading = true;
         try {
-          let url = 'http://localhost:8000/api/leaderboard/';
-          if (this.selectedCategory) {
-            url += `?category=${this.selectedCategory}`;
-          }
+          this.loading = true;
           
-          const response = await axios.get(url);
+          // APIエンドポイントをコンソールに出力
+          const endpoint = `/api/quiz/leaderboard/?category=${this.selectedCategory}`;
+          console.log('リーダーボードAPIを呼び出し中:', endpoint);
+          
+          // トークンを確認
+          console.log('認証トークン:', this.$store.state.auth.token);
+          
+          const response = await api.get(endpoint);
+          console.log('リーダーボードレスポンス:', response.data);
+          
           this.leaderboardData = response.data;
           this.loading = false;
         } catch (error) {
           console.error('リーダーボードデータの取得に失敗しました:', error);
+          
+          if (error.response && error.response.status === 401) {
+            this.error = 'ログインが必要です。再度ログインしてください。';
+            this.$store.dispatch('auth/logout');
+            this.$router.push('/login');
+          } else {
+            this.error = 'データの取得に失敗しました。';
+          }
+          
           this.loading = false;
         }
+      },
+      changeCategory(category) {
+        this.selectedCategory = category;
+        this.fetchLeaderboard();
       }
     }
   };

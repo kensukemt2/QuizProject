@@ -63,21 +63,12 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const isAuthenticated = store.getters['auth/isAuthenticated'];
   
-  // 認証が必要なルートに対するチェック
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!isAuthenticated) {
       next({
         path: '/login',
         query: { redirect: to.fullPath }
       });
-    } else {
-      next();
-    }
-  } 
-  // ゲストのみのルート（ログイン済みならリダイレクト）
-  else if (to.matched.some(record => record.meta.guestOnly)) {
-    if (isAuthenticated) {
-      next({ path: '/' });
     } else {
       next();
     }
