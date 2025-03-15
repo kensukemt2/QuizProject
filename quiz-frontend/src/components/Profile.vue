@@ -6,10 +6,17 @@
         <p>読み込み中...</p>
       </div>
       
+      <!-- isAuthenticated も確認 -->
+      <div v-else-if="!isAuthenticated || !user" class="error-message">
+        <p>ユーザー情報を取得できませんでした。ログインしてください。</p>
+        <router-link to="/login" class="btn">ログイン</router-link>
+      </div>
+      
       <div v-else class="profile-content">
+        <!-- 安全な参照のため safeUsername を使用 -->
         <div class="user-info">
-          <h3>{{ user.username }}</h3>
-          <p>{{ user.email }}</p>
+          <h3>{{ safeUsername }}</h3>
+          <p>{{ user.email || 'メールアドレスなし' }}</p>
         </div>
         
         <div class="stats-overview">
@@ -86,7 +93,7 @@
   </template>
   
   <script>
-  import axios from 'axios';
+  import api from '../utils/api';
   import { mapGetters } from 'vuex';
   
   export default {
@@ -101,20 +108,50 @@
           category_stats: []
         },
         recentAttempts: [],
-        loading: true
+        loading: true,
+        apiError: null
       };
     },
     computed: {
-      ...mapGetters('auth', ['user']),
+      ...mapGetters('auth', ['user', 'isAuthenticated']),
+      // 安全にユーザー名を取得するためのゲッター
+      safeUsername() {
+        return this.user?.username || 'ゲスト';
+      }
     },
     created() {
-      this.fetchUserStats();
-      this.fetchRecentActivity();
+      // 認証状態を確認
+      if (!this.isAuthenticated) {
+        console.log('未認証のためログインページへリダイレクト');
+        this.$router.push('/login');
+        return;
+      }
+      
+      // ユーザー情報がない場合は、ユーザー情報を取得
+      if (!this.user) {
+        console.log('ユーザー情報がないため取得を試みます');
+        this.$store.dispatch('auth/fetchUserProfile').then(() => {
+          if (!this.user) {
+            // それでもユーザー情報が取得できない場合はログイン画面へ
+            console.log('ユーザー情報を取得できませんでした');
+            this.$router.push('/login');
+            return;
+          }
+          // ユーザー情報が取得できたらデータ取得
+          this.fetchUserStats();
+          this.fetchRecentActivity();
+        });
+      } else {
+        // ユーザー情報がある場合は、そのままデータ取得
+        this.fetchUserStats();
+        this.fetchRecentActivity();
+      }
     },
     methods: {
       async fetchUserStats() {
         try {
-          const response = await axios.get('http://localhost:8000/api/user/stats/');
+          // $http ではなく api を使用
+          const response = await api.get('/api/user/stats/');
           this.stats = response.data;
         } catch (error) {
           console.error('ユーザー統計の取得に失敗しました:', error);
@@ -124,8 +161,14 @@
       },
       async fetchRecentActivity() {
         try {
-          const response = await axios.get('http://localhost:8000/api/quiz/history/?limit=5');
-          this.recentAttempts = response.data.slice(0, 5); // 最新5件のみ表示
+          // $http ではなく api を使用
+          const response = await api.get('/api/quiz/history/?limit=5');
+          if (response.data && Array.isArray(response.data)) {
+            this.recentAttempts = response.data.slice(0, 5);
+          } else if (response.data && Array.isArray(response.data.results)) {
+            // ページネーション形式の場合
+            this.recentAttempts = response.data.results.slice(0, 5);
+          }
         } catch (error) {
           console.error('最近のアクティビティの取得に失敗しました:', error);
         }

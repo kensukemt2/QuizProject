@@ -9,6 +9,7 @@
         <router-link to="/quiz">クイズ</router-link>
         <router-link to="/history">履歴</router-link>
         <router-link to="/leaderboard">ランキング</router-link>
+        <router-link to="/profile">プロフィール</router-link>
         <span class="user-info" v-if="currentUser">{{ currentUser.username }}さん</span>
         <button class="logout-btn" @click="handleLogout">ログアウト</button>
       </template>
