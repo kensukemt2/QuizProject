@@ -3,10 +3,10 @@ from rest_framework import viewsets, permissions, generics
 from .models import Category, Question, Choice, QuizAttempt
 from .serializers import CategorySerializer, QuestionSerializer, ChoiceSerializer, RegisterSerializer, UserSerializer, SaveQuizResultSerializer, QuizAttemptSerializer, UserLeaderboardSerializer, UserStatsSerializer
 from django.contrib.auth.models import User
-
+from django.db.models import Avg, Count, Sum, F, ExpressionWrapper, FloatField, Q, Case, When, Value
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by('name')  # 名前でソート
     serializer_class = CategorySerializer
 
 class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
@@ -54,33 +54,42 @@ class QuizAttemptDetailView(generics.RetrieveAPIView):
     def get_queryset(self):
         return QuizAttempt.objects.filter(user=self.request.user)
 # リーダーボード
-from django.db import models
-from django.db.models import Avg, Count, Sum, F, ExpressionWrapper, FloatField, Q
-from django.db.models.functions import Round
-
-
 class LeaderboardView(generics.ListAPIView):
+    """全ユーザーの成績を集計したリーダーボードを提供するAPI"""
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = UserLeaderboardSerializer
     
     def get_queryset(self):
-        # クエリパラメータからカテゴリを取得
         category = self.request.query_params.get('category')
         
-        # ベースクエリ - ユーザーごとの結果集計
+        # 基本的なクエリ - 単純化
         queryset = User.objects.annotate(
-            total_attempts=Count('quizattempt'),
-            avg_score=Avg('quizattempt__percentage'),
-            total_score=Sum('quizattempt__score')
-        ).order_by('-avg_score')  # 平均スコアで降順ソート
+            total_attempts=Count('quiz_attempts'),
+            total_score=Sum('quiz_attempts__score', default=0),
+            total_questions=Sum('quiz_attempts__total_questions', default=0),
+            avg_percentage=Case(
+                When(total_questions__gt=0, 
+                    then=ExpressionWrapper(
+                        F('total_score') * 100.0 / F('total_questions'), 
+                        output_field=FloatField()
+                    )
+                ),
+                default=Value(0.0),
+                output_field=FloatField()
+            )
+        )
         
-        # カテゴリフィルター（'all'でない場合）
+        # カテゴリフィルターはシンプルに保持
         if category and category != 'all' and category.isdigit():
-            queryset = queryset.filter(quizattempt__category_id=category)
+            queryset = queryset.filter(quiz_attempts__category_id=category)
+            
+        # 少なくとも1つの試行があるユーザーのみ表示
+        queryset = queryset.filter(total_attempts__gt=0).distinct()
         
-        return queryset
+        # 平均パーセンテージでソート（降順）
+        return queryset.order_by('-avg_percentage')
+
 #ユーザープロフィールとパフォーマンス統計
-# quiz_api/views.py に追加
 class UserStatsView(generics.RetrieveAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = UserStatsSerializer
@@ -88,33 +97,25 @@ class UserStatsView(generics.RetrieveAPIView):
     def get_object(self):
         user = self.request.user
         
-        # カテゴリーごとの統計を計算
-        category_stats = []
-        categories = Category.objects.all()
+        # シンプルな統計計算
+        attempts = QuizAttempt.objects.filter(user=user)
+        categories_played = attempts.values('category').distinct().count()
         
-        for category in categories:
-            attempts = QuizAttempt.objects.filter(
-                user=user,
-                category=category
-            )
-            
-            if attempts.exists():
-                category_stats.append({
-                    'id': category.id,
-                    'name': category.name,
-                    'attempts_count': attempts.count(),
-                    'best_score': attempts.order_by('-score').first().score if attempts.exists() else 0,
-                    'avg_score': attempts.aggregate(avg=Avg('score'))['avg'],
-                    'avg_percentage': attempts.aggregate(avg=Avg('percentage'))['avg']
-                })
+        # ベストカテゴリーを取得（平均パーセンテージが最も高いもの）
+        best_category = None
+        if attempts.exists():
+            category_avg = attempts.values('category__name').annotate(
+                avg=Avg('percentage')
+            ).order_by('-avg')
+            if category_avg:
+                best_category = category_avg[0]['category__name']
         
-        # ユーザーの全体統計
+        # 全体統計
         overall_stats = {
-            'total_attempts': QuizAttempt.objects.filter(user=user).count(),
-            'total_categories_played': len(category_stats),
-            'best_category': max(category_stats, key=lambda x: x['avg_percentage'])['name'] if category_stats else None,
-            'avg_percentage': QuizAttempt.objects.filter(user=user).aggregate(avg=Avg('percentage'))['avg'] or 0,
-            'category_stats': category_stats
+            'total_attempts': attempts.count(),
+            'total_categories_played': categories_played,
+            'best_category': best_category,
+            'avg_percentage': attempts.aggregate(avg=Avg('percentage'))['avg'] or 0
         }
         
         return overall_stats

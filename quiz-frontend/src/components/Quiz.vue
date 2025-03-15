@@ -9,17 +9,18 @@
         <h2>カテゴリを選択してください</h2>
         <div class="categories">
           <button 
-            v-for="category in categories" 
-            :key="category.id"
-            @click="selectCategory(category.id)"
+            v-for="(category, index) in categories" 
+            :key="`cat-${index}`"
+            @click="category ? selectCategory(category.id) : null"
             class="category-btn"
+            :disabled="!category"
           >
-            {{ category.name }}
+            {{ category?.name || 'カテゴリなし' }}
           </button>
         </div>
       </div>
       
-      <div class="quiz" v-else>
+      <div class="quiz" v-else-if="currentQuestion">
         <div class="question-counter">質問 {{ questionIndex + 1 }} / {{ questions.length }}</div>
         <div class="score">スコア: {{ score }}</div>
         
@@ -28,17 +29,17 @@
           
           <div class="choices">
             <button 
-              v-for="choice in currentQuestion.choices" 
-              :key="choice.id"
+              v-for="(choice, index) in (currentQuestion?.choices || [])" 
+              :key="`choice-${index}`"
               @click="checkAnswer(choice)"
               :disabled="answered"
               :class="{ 
                 'choice-btn': true,
-                'correct': answered && choice.is_correct,
-                'incorrect': answered && selectedChoice === choice && !choice.is_correct 
+                'correct': answered && choice?.is_correct,
+                'incorrect': answered && selectedChoice === choice && !choice?.is_correct 
               }"
             >
-              {{ choice.text }}
+              {{ choice?.text || '選択肢' }}
             </button>
           </div>
           
@@ -58,12 +59,34 @@
           </button>
         </div>
       </div>
+
+      <div v-else-if="error" class="error-message">
+        <p>{{ error }}</p>
+        <button @click="resetQuiz" class="reset-btn">カテゴリー選択に戻る</button>
+      </div>
       
-      <div class="results" v-if="quizCompleted">
-        <h2>クイズ完了!</h2>
-        <p>あなたのスコア: {{ score }} / {{ questions.length }}</p>
+      <div class="quiz-results" v-if="quizCompleted && questions.length > 0">
+        <h2>クイズ結果</h2>
+        <p>スコア: {{ score }}/{{ questions.length }}</p>
         <p>正答率: {{ Math.round((score / questions.length) * 100) }}%</p>
-        <button @click="resetQuiz" class="reset-btn">もう一度挑戦する</button>
+        
+        <div class="answers-review" v-if="allAnswers && allAnswers.length > 0">
+          <h3>回答レビュー:</h3>
+          <template v-for="(answer, index) in allAnswers" :key="'answer-' + index">
+            <div v-if="answer && answer.question" class="answer-item">
+              <p class="question-text">{{ answer.question?.text || '質問' }}</p>
+              <p :class="['answer-text', answer.correct ? 'correct' : 'incorrect']">
+                あなたの回答: {{ answer.selectedChoice?.text || '未回答' }}
+                <span class="result">{{ answer.correct ? '✓' : '✗' }}</span>
+              </p>
+              <p v-if="!answer.correct" class="correct-answer">
+                正解: {{ answer.correctChoice?.text || '不明' }}
+              </p>
+            </div>
+          </template>
+        </div>
+        
+        <button @click="resetQuiz" class="restart-btn">新しいクイズを始める</button>
       </div>
     </div>
   </div>
@@ -98,48 +121,210 @@ export default {
   },
   computed: {
     currentQuestion() {
-      if (this.questions.length === 0) {
+      // 質問がない場合や範囲外の場合はnullを返す
+      if (!this.questions || !this.questions.length || this.questionIndex >= this.questions.length) {
         return null;
       }
-      return this.questionIndex < this.questions.length ? this.questions[this.questionIndex] : null;
+      
+      // 質問オブジェクトのディープコピーを作成（元データを変更しないため）
+      try {
+        const question = JSON.parse(JSON.stringify(this.questions[this.questionIndex]));
+        
+        // choicesプロパティの安全性チェック
+        if (!question || !question.choices) {
+          console.warn('質問データに問題があります:', question);
+          return { ...question, choices: [], text: question?.text || '質問データエラー' };
+        }
+        
+        // 各選択肢の処理
+        question.choices = (question.choices || [])
+          .filter(choice => choice !== null && choice !== undefined) // null/undefinedをフィルタリング
+          .map((choice, index) => {
+            if (!choice) return { id: `temp_${index}`, text: '選択肢データエラー', is_correct: false };
+            if (!choice.id) choice.id = `temp_${index}`;
+            return choice;
+          });
+        
+        return question;
+      } catch (error) {
+        console.error('質問データの処理中にエラー:', error);
+        return { id: 'error', text: 'データエラー', choices: [] };
+      }
     },
     correctAnswerText() {
-      if (!this.currentQuestion) return '';
-      const correctChoice = this.currentQuestion.choices.find(choice => choice.is_correct);
-      return correctChoice ? correctChoice.text : '';
+      if (!this.currentQuestion || !this.currentQuestion.choices) return '';
+      const correctChoice = this.currentQuestion.choices.find(choice => choice?.is_correct);
+      return correctChoice?.text || '';
     },
     isLastQuestion() {
       return this.questionIndex === this.questions.length - 1;
     }
   },
+  watch: {
+    questions(newQuestions) {
+      if (!newQuestions || newQuestions.length === 0) {
+        this.error = this.error || 'このカテゴリには問題がありません';
+      } else {
+        this.error = null;
+      }
+    },
+    currentQuestion(newQuestion) {
+      // デバッグ用
+      console.log('currentQuestion変更:', newQuestion ? `ID: ${newQuestion.id}` : 'null');
+      
+      if (!newQuestion && this.questions.length > 0 && !this.quizCompleted) {
+        console.warn('質問データに問題があります。再設定します。');
+        this.questionIndex = 0; // 安全にインデックスをリセット
+      }
+    }
+  },
   methods: {
     async fetchCategories() {
       try {
+        this.loading = true;
+        console.log('カテゴリ取得開始');
         const response = await axios.get('http://localhost:8000/api/categories/');
-        this.categories = response.data;
+        console.log('カテゴリ取得成功:', response.data);
+        
+        // レスポンスがページネーション形式かどうか確認
+        let categoryData;
+        if (response.data && Array.isArray(response.data.results)) {
+          // ページネーション形式の場合
+          categoryData = response.data.results;
+          console.log('ページネーションデータから取得:', categoryData);
+        } else if (Array.isArray(response.data)) {
+          // 単純な配列の場合
+          categoryData = response.data;
+          console.log('単純な配列:', categoryData);
+        } else {
+          console.error('予期しないレスポース形式:', response.data);
+          this.error = 'サーバーからの応答が正しくありません';
+          this.categories = [];
+          this.loading = false;
+          return;
+        }
+        
+        // データの検証と変換
+        const validatedData = categoryData
+          .filter(item => item !== null && item !== undefined)
+          .map((item, index) => {
+            if (!item) return { id: `temp-${index}`, name: 'データなし' };
+            if (!item.id) item.id = `temp-${index}`;
+            return item;
+          });
+        
+        this.categories = validatedData;
+        console.log('カテゴリ設定完了:', this.categories);
         this.loading = false;
       } catch (error) {
         console.error('カテゴリの取得に失敗しました:', error);
         this.loading = false;
+        this.error = 'カテゴリの読み込みに失敗しました';
+        this.categories = [];
       }
     },
     async selectCategory(categoryId) {
+      if (!categoryId) {
+        console.error('カテゴリIDが無効です');
+        this.error = 'カテゴリの選択に問題が発生しました';
+        this.loading = false;
+        return;
+      }
+    
       this.loading = true;
+      this.error = null;
+      
       try {
         // カテゴリ情報を保存
         const selectedCategory = this.categories.find(c => c.id === categoryId);
-        this.selectedCategory = selectedCategory;
         
-        const response = await axios.get(`http://localhost:8000/api/questions/?category=${categoryId}`);
-        this.questions = this.shuffleArray(response.data);
+        if (!selectedCategory) {
+          console.error('選択したカテゴリが見つかりません:', categoryId);
+          this.error = 'カテゴリが見つかりません';
+          this.loading = false;
+          return;
+        }
+        
+        this.selectedCategory = selectedCategory;
+        this.questions = [];  // クリアして古いデータが表示されないようにする
+        
+        await this.fetchQuestions(categoryId);
+      } catch (error) {
+        console.error('質問の取得に失敗しました:', error);
+        this.error = '質問の取得に失敗しました';
+        this.loading = false;
+      }
+    },
+    async fetchQuestions(categoryId) {
+      this.loading = true;
+      this.error = null;
+      
+      try {
+        // カテゴリIDのログ出力と型確認
+        console.log('カテゴリID:', categoryId, 'タイプ:', typeof categoryId);
+        
+        // URLを構築する前に確実に数値であることを確認
+        const categoryIdNum = Number(categoryId);
+        if (isNaN(categoryIdNum)) {
+          throw new Error(`無効なカテゴリID: ${categoryId}`);
+        }
+        
+        // 正しいURLを構築
+        const url = `http://localhost:8000/api/questions/?category=${categoryIdNum}`;
+        console.log('リクエスト先URL:', url);
+        
+        const response = await axios.get(url);
+        console.log('API応答データ:', response.data);
+        
+        // レスポンスがページネーション形式かどうか確認
+        let questionsData;
+        if (response.data && Array.isArray(response.data.results)) {
+          // ページネーション形式の場合
+          questionsData = response.data.results;
+          console.log('ページネーションデータから質問を取得:', questionsData);
+        } else if (Array.isArray(response.data)) {
+          // 単純な配列の場合
+          questionsData = response.data;
+          console.log('ページネーションデータから質問を取得:', questionsData);
+        } else {
+          console.error('予期しない質問データ形式:', response.data);
+          this.error = '質問データの形式が正しくありません';
+          this.loading = false;
+          return;
+        }
+        
+        if (!questionsData.length) {
+          this.error = 'このカテゴリには問題がありません';
+          this.loading = false;
+          return;
+        }
+        
+        // データの検証と修正
+        const validatedQuestions = questionsData.map(question => {
+          if (!question.choices || !Array.isArray(question.choices)) {
+            question.choices = [];
+          } else {
+            // 選択肢の検証
+            question.choices = question.choices
+              .filter(choice => choice !== null && choice !== undefined)
+              .map((choice, idx) => {
+                if (!choice) return { id: `temp_${question.id}_${idx}`, text: '選択肢データなし', is_correct: false };
+                if (!choice.id) choice.id = `temp_${question.id}_${idx}`;
+                return choice;
+              });
+          }
+          return question;
+        });
+        
+        this.questions = this.shuffleArray(validatedQuestions);
         this.questionIndex = 0;
         this.score = 0;
+        this.quizCompleted = false; // 'completed'ではなく'quizCompleted'に統一
         this.answered = false;
-        this.quizCompleted = false;
-        this.allAnswers = [];  // 回答をリセット
         this.loading = false;
       } catch (error) {
         console.error('質問の取得に失敗しました:', error);
+        this.error = '質問の読み込みに失敗しました';
         this.loading = false;
       }
     },
@@ -153,33 +338,49 @@ export default {
       return newArray;
     },
     checkAnswer(choice) {
+      if (!choice) {
+        console.error('選択された選択肢がnullです');
+        return;
+      }
+    
       this.answered = true;
       this.selectedChoice = choice;
-      this.correct = choice.is_correct;
+      this.correct = !!choice.is_correct;
       
       if (choice.is_correct) {
         this.score++;
       }
-       // 回答を記録
+      
+      // 回答を記録（プロパティ名を一致させる）
+      const correctChoice = this.currentQuestion?.choices?.find(c => c?.is_correct) || null;
+      
       this.allAnswers.push({
         question: this.currentQuestion,
         selectedChoice: choice,
-        isCorrect: choice.is_correct
+        correct: !!choice.is_correct,  // is_correctではなくcorrectに統一
+        correctChoice: correctChoice
       });
     },
     nextQuestion() {
-      if (this.isLastQuestion) {
-      this.quizCompleted = true;
-      // ユーザーがログインしている場合、結果を保存
-      if (this.$store.getters['auth/isAuthenticated']) {
-        this.saveQuizResult();
+      if (!this.currentQuestion) {
+        console.warn('現在の質問がnullです');
+        this.resetQuiz();
+        return;
       }
-    } else {
-      this.questionIndex++;
-      this.answered = false;
-      this.selectedChoice = null;
-    }
+      
+      if (this.isLastQuestion) {
+        this.quizCompleted = true;
+        // ユーザーがログインしている場合、結果を保存
+        if (this.$store.getters['auth/isAuthenticated']) {
+          this.saveQuizResult();
+        }
+      } else {
+        this.questionIndex++;
+        this.answered = false;
+        this.selectedChoice = null;
+      }
     },
+    // resetQuizの拡張
     resetQuiz() {
       this.questions = [];
       this.questionIndex = 0;
@@ -187,30 +388,33 @@ export default {
       this.answered = false;
       this.selectedChoice = null;
       this.quizCompleted = false;
-      this.fetchCategories();
+      this.allAnswers = [];
+      this.selectedCategory = null;
+      this.error = null;
+      
+      // カテゴリデータがない場合は再取得
+      if (!this.categories || this.categories.length === 0) {
+        this.fetchCategories();
+      } else {
+        this.loading = false;
+      }
     },
     async saveQuizResult() {
       if (!this.quizCompleted) return;
       
       try {
-        // Vuex ストアから認証トークンを取得
-        const token = this.$store.state.auth.token;
-        
-        if (!token) {
-          this.toast.error('認証エラー: ログインしてください');
-          return;
-        }
-        
         // レスポンスデータの準備
-        const responseData = this.allAnswers.map(answer => ({
-          question_id: answer.question.id,
-          selected_choice_id: answer.selectedChoice.id,
-          is_correct: answer.isCorrect
-        }));
+        const responseData = this.allAnswers
+          .filter(answer => answer && answer.question && answer.question.id)
+          .map(answer => ({
+            question_id: answer.question.id,
+            selected_choice_id: answer.selectedChoice?.id || null,
+            is_correct: !!answer.correct
+          }));
         
-        // 結果を保存（ヘッダーに認証トークンを追加）
+        // 結果を保存
         await api.post('/api/quiz/save-result/', {
-          category_id: this.selectedCategory.id,
+          category_id: this.selectedCategory?.id,
           score: this.score,
           total_questions: this.questions.length,
           responses: responseData
@@ -220,18 +424,23 @@ export default {
         this.toast.success('クイズ結果が保存されました！');
       } catch (error) {
         console.error('結果の保存に失敗しました:', error);
-        
-        // エラーに応じたメッセージ
-        if (error.response && error.response.status === 401) {
-          this.toast.error('認証エラー: 再ログインしてください');
-        } else {
-          this.toast.error('結果の保存に失敗しました');
-        }
+        // エラー処理...
       }
     }
   },
   created() {
+    // fetchCategoriesはここで一度だけ呼び出す
     this.fetchCategories();
+    
+    // コンポーネント初期化時にデータをリセット
+    this.questions = [];
+    this.questionIndex = 0;
+    this.score = 0;
+    this.answered = false;
+    this.selectedChoice = null;
+    this.quizCompleted = false;
+    this.allAnswers = [];
+    this.selectedCategory = null;
   }
 };
 </script>

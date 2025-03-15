@@ -101,6 +101,52 @@ const actions = {
       localStorage.removeItem('user');
       delete axios.defaults.headers.common['Authorization'];
     }
+  },
+
+  // auth.js アクションに追加
+  async fetchUserProfile({ commit, state }) {
+    try {
+      // トークンがない場合は処理しない
+      if (!state.token) {
+        console.warn('認証トークンがないため、ユーザー情報を取得できません');
+        return false;
+      }
+
+      console.log('ユーザープロフィールを取得します');
+      console.log('使用するトークン:', state.token.substring(0, 10) + '...');
+
+      // 認証形式をJWTに合わせる
+      const response = await fetch('http://localhost:8000/api/profile/', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${state.token}`  // Bearer から Token に変更
+        }
+      });
+
+      // レスポンスの検証
+      if (!response.ok) {
+        console.error(`ユーザープロフィール取得エラー: HTTP ${response.status}`);
+        
+        // エラーレスポンスの詳細を取得
+        try {
+          const errorData = await response.json();
+          console.error('エラーの詳細:', errorData);
+        } catch (e) {
+          // JSONデータがない場合は無視
+        }
+        
+        throw new Error(`ステータスコード ${response.status}`);
+      }
+
+      const userData = await response.json();
+      commit('SET_USER', userData);
+      console.log('ユーザープロフィール取得成功:', userData);
+      return true;
+    } catch (error) {
+      console.error('ユーザープロフィール取得エラー:', error);
+      return false;
+    }
   }
 };
 

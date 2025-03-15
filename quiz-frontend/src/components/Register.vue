@@ -134,52 +134,48 @@ export default {
         
         if (err.response && err.response.data) {
           const errorData = err.response.data;
-          
-          // ユーザー名エラー
-          if (errorData.username) {
-            if (errorData.username[0].includes('already exists')) {
-              this.error = 'そのユーザー名は既に使用されています。';
-            } else {
-              this.error = `ユーザー名エラー: ${errorData.username[0]}`;
-            }
-          }
-          // メールエラー
-          else if (errorData.email) {
-            if (errorData.email[0].includes('already exists')) {
-              this.error = 'そのメールアドレスは既に登録されています。';
-            } else {
-              this.error = `メールエラー: ${errorData.email[0]}`;
-            }
-          }
-          // パスワードエラー
-          else if (errorData.password) {
-            const pwError = errorData.password[0];
-            if (pwError.includes('too common')) {
-              this.error = 'パスワードが一般的すぎます。別のパスワードを試してください。';
-            } else if (pwError.includes('too short')) {
-              this.error = 'パスワードが短すぎます。8文字以上必要です。';
-            } else if (pwError.includes('entirely numeric')) {
-              this.error = 'パスワードは数字だけでなく文字も含めてください。';
-            } else if (pwError.includes('too similar')) {
-              this.error = 'パスワードがユーザー名と似すぎています。';
-            } else {
-              this.error = `パスワードエラー: ${pwError}`;
-            }
-          }
-          // パスワード確認エラー
-          else if (errorData.password2) {
-            this.error = `パスワード確認エラー: ${errorData.password2[0]}`;
-          }
-          // その他のエラー
-          else {
-            this.error = '登録に失敗しました。入力内容を確認してください。';
-          }
+          this.error = this.parseErrorMessage(errorData);
         } else {
           this.error = '登録処理中にエラーが発生しました。後でもう一度お試しください。';
         }
       } finally {
         this.isLoading = false;
       }
+    },
+    // エラーメッセージの処理を関数化する
+    parseErrorMessage(errorData) {
+      if (!errorData) return '不明なエラーが発生しました';
+      
+      // キーとエラーメッセージのマッピング
+      const errorTypes = {
+        username: {
+          'already exists': 'そのユーザー名は既に使用されています。'
+        },
+        email: {
+          'already exists': 'そのメールアドレスは既に登録されています。'
+        },
+        password: {
+          'too common': 'パスワードが一般的すぎます。別のパスワードを試してください。',
+          'too short': 'パスワードが短すぎます。8文字以上必要です。',
+          'entirely numeric': 'パスワードは数字だけでなく文字も含めてください。',
+          'too similar': 'パスワードがユーザー名と似すぎています。'
+        }
+      };
+      
+      // 最初に見つかったエラーを返す
+      for (const field in errorTypes) {
+        if (errorData[field]) {
+          const message = errorData[field][0];
+          for (const key in errorTypes[field]) {
+            if (message.includes(key)) {
+              return errorTypes[field][key];
+            }
+          }
+          return `${field}エラー: ${message}`;
+        }
+      }
+      
+      return '登録に失敗しました。入力内容を確認してください。';
     }
   }
 };

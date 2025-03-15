@@ -65,15 +65,13 @@ class QuestionResponseSerializer(serializers.ModelSerializer):
         return obj.selected_choice.text
 
 class QuizAttemptSerializer(serializers.ModelSerializer):
-    category_name = serializers.SerializerMethodField()
-    responses = QuestionResponseSerializer(many=True, read_only=True)
+    user = UserSerializer()  # ユーザー情報を明示的に含める
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    created_at = serializers.DateTimeField(format='%Y-%m-%dT%H:%M:%SZ')  # ISO形式を明示
     
     class Meta:
         model = QuizAttempt
-        fields = ['id', 'category_name', 'score', 'total_questions', 'percentage', 'created_at', 'responses']
-    
-    def get_category_name(self, obj):
-        return obj.category.name
+        fields = ['id', 'user', 'category', 'category_name', 'score', 'total_questions', 'percentage', 'created_at']
 
 class ResponseSerializer(serializers.Serializer):
     question_id = serializers.IntegerField()
@@ -120,13 +118,26 @@ class SaveQuizResultSerializer(serializers.Serializer):
 # リーダーボード
 # quiz_api/serializers.py に追加
 class UserLeaderboardSerializer(serializers.ModelSerializer):
+    """リーダーボード用のユーザー集計データシリアライザー"""
     total_attempts = serializers.IntegerField(read_only=True)
-    avg_score = serializers.FloatField(read_only=True)
     total_score = serializers.IntegerField(read_only=True)
+    total_questions = serializers.IntegerField(read_only=True)
+    avg_percentage = serializers.FloatField(read_only=True)
+    
+    # カテゴリ別フィールドはオプショナル
+    category_attempts = serializers.IntegerField(read_only=True, required=False)
+    category_score = serializers.IntegerField(read_only=True, required=False)
+    category_questions = serializers.IntegerField(read_only=True, required=False)
+    category_percentage = serializers.FloatField(read_only=True, required=False)
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'total_attempts', 'avg_score', 'total_score']
+        # 必要最小限のフィールドだけを含める
+        fields = [
+            'id', 'username', 
+            'total_attempts', 'total_score', 'total_questions', 'avg_percentage',
+            'category_attempts', 'category_score', 'category_questions', 'category_percentage'
+        ]
 
 #ユーザープロフィールとパフォーマンス統計
 # quiz_api/serializers.py に追加

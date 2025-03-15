@@ -43,7 +43,7 @@ urlpatterns += [
 ]
 # リーダーボード
 urlpatterns += [
-    path('api/leaderboard/', LeaderboardView.as_view(), name='leaderboard'),
+    path('api/quiz/leaderboard/', LeaderboardView.as_view(), name='leaderboard'),  # この行を追加
 ]
 #ユーザープロフィールとパフォーマンス統計
 urlpatterns += [
