@@ -68,10 +68,18 @@ class QuizAttemptSerializer(serializers.ModelSerializer):
     user = UserSerializer()  # ユーザー情報を明示的に含める
     category_name = serializers.CharField(source='category.name', read_only=True)
     created_at = serializers.DateTimeField(format='%Y-%m-%dT%H:%M:%SZ')  # ISO形式を明示
+    # 回答の詳細情報を追加
+    responses = serializers.SerializerMethodField()
     
     class Meta:
         model = QuizAttempt
-        fields = ['id', 'user', 'category', 'category_name', 'score', 'total_questions', 'percentage', 'created_at']
+        fields = ['id', 'user', 'category', 'category_name', 'score', 'total_questions', 
+                 'percentage', 'created_at', 'responses']
+    
+    def get_responses(self, obj):
+        # 回答の詳細情報を取得
+        responses = QuestionResponse.objects.filter(quiz_attempt=obj)
+        return QuestionResponseSerializer(responses, many=True).data
 
 class ResponseSerializer(serializers.Serializer):
     question_id = serializers.IntegerField()
