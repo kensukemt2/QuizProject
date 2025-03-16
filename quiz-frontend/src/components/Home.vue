@@ -106,7 +106,7 @@
               <span :class="['rank', getRankClass(index)]">{{ index + 1 }}</span>
               <span>{{ user.username || '名無し' }} - {{ formatPercentage(user.avg_percentage || 0) }}</span>
             </template>
-            <span class="all-rankings" @click="$router.push('/leaderboard')">全ランキング ▶</span>
+            <span v-if="isAuthenticated" class="all-rankings" @click="$router.push('/leaderboard')">全ランキング ▶</span>
           </template>
         </div>
       </div>
