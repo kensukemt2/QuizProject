@@ -24,12 +24,21 @@ const actions = {
       commit('SET_STATS_LOADING', true);
       commit('SET_STATS_ERROR', null);
       
-      // authモジュールからトークンを取得
+      // トークンが存在するか確認
       const token = rootGetters['auth/token'];
+      
+      if (!token) {
+        console.error('認証トークンが見つかりません');
+        throw new Error('認証トークンがありません');
+      }
+      
+      console.log('認証トークン:', token.substring(0, 10) + '...');  // デバッグ用（セキュリティのため一部だけ表示）
       
       const response = await axios.get('http://localhost:8000/api/user/stats/', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
         }
       });
       
@@ -37,6 +46,12 @@ const actions = {
       return response.data;
     } catch (error) {
       console.error('Failed to fetch user stats:', error);
+      
+      // より詳細なエラーログ
+      if (error.response) {
+        console.error('エラーレスポンス:', error.response.status, error.response.data);
+      }
+      
       commit('SET_STATS_ERROR', 'Failed to fetch user statistics');
       return {
         total_attempts: 0,

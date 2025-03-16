@@ -186,6 +186,8 @@ const mutations = {
 };
 
 const getters = {
+  // トークンを返すgetter
+  token: state => state.token,
   isAuthenticated: state => !!state.token,
   currentUser: state => state.user,
   // 別名として user ゲッターも追加（互換性のため）
