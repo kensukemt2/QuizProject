@@ -1,10 +1,18 @@
 <template>
   <div class="quiz-container">
+    <div v-if="isGuestMode" class="guest-mode-banner">
+      <span>👤 ゲストモードでクイズを実行中</span>
+      <router-link to="/login" class="login-link">ログインして結果を保存する</router-link>
+    </div>
     <div v-if="loading" class="loading">
       <p>読み込み中...</p>
     </div>
     
     <div v-else>
+      <div v-if="isGuestMode" class="guest-mode-indicator">
+        ゲストモードでプレイ中
+        <router-link to="/login" class="login-link">ログイン</router-link>
+      </div>
       <div class="category-selection" v-if="!currentQuestion">
         <h2>カテゴリを選択してください</h2>
         <div class="categories">
@@ -67,6 +75,11 @@
       
       <div class="quiz-results" v-if="quizCompleted && questions.length > 0">
         <h2>クイズ結果</h2>
+        <p v-if="isGuestMode" class="guest-notice">
+          ゲストモードです。結果を保存するには
+          <router-link to="/login">ログイン</router-link>
+          してください。
+        </p>
         <p>スコア: {{ score }}/{{ questions.length }}</p>
         <p>正答率: {{ Math.round((score / questions.length) * 100) }}%</p>
         
@@ -96,6 +109,7 @@
 import { useToast } from 'vue-toastification';
 import axios from 'axios';
 import api from '../utils/api';
+import { mapGetters } from 'vuex'; // Vuexのマッピングを追加
 
 export default {
   name: 'QuizPage',
@@ -115,11 +129,17 @@ export default {
       selectedChoice: null,
       correct: false,
       quizCompleted: false,
-      allAnswers: [],  // これを追加
-      selectedCategory: null  // これを追加
+      allAnswers: [],
+      selectedCategory: null,
+      isGuestMode: false,
+      showLoginPrompt: false,
+      error: null, // エラーステートの追加
     };
   },
   computed: {
+    // Vuexのゲッターをマッピング
+    ...mapGetters('auth', ['isAuthenticated', 'user']),
+    
     currentQuestion() {
       // 質問がない場合や範囲外の場合はnullを返す
       if (!this.questions || !this.questions.length || this.questionIndex >= this.questions.length) {
@@ -373,6 +393,8 @@ export default {
         // ユーザーがログインしている場合、結果を保存
         if (this.$store.getters['auth/isAuthenticated']) {
           this.saveQuizResult();
+        } else if (this.isGuestMode) {
+          this.saveGuestScore();
         }
       } else {
         this.questionIndex++;
@@ -426,21 +448,78 @@ export default {
         console.error('結果の保存に失敗しました:', error);
         // エラー処理...
       }
+    },
+    async saveGuestScore() {
+      // ローカルストレージにゲストスコアを一時保存
+      const guestScores = JSON.parse(localStorage.getItem('guestScores') || '[]');
+      
+      // カテゴリ情報を安全に取得
+      const categoryId = this.selectedCategory?.id || 0;
+      const categoryName = this.getCategoryName(this.selectedCategory);
+      
+      guestScores.push({
+        id: Date.now(),
+        category_id: categoryId,
+        category_name: categoryName,
+        score: this.score,
+        total_questions: this.questions.length,
+        percentage: (this.score / this.questions.length) * 100,
+        created_at: new Date().toISOString()
+      });
+      
+      // 最新10件だけ保存
+      if (guestScores.length > 10) {
+        guestScores.splice(0, guestScores.length - 10);
+      }
+      
+      localStorage.setItem('guestScores', JSON.stringify(guestScores));
+      
+      // ゲストユーザーにログインを促すメッセージ
+      this.toast.info('ログインすると、クイズの履歴が永続的に保存されます！');
+    },
+    getCategoryName(category) {
+      if (!category) return 'カテゴリなし';
+      return category.name || 'カテゴリなし';
+    },
+    initQuiz() {
+      // コンポーネントの状態を初期化
+      this.questions = [];
+      this.questionIndex = 0;
+      this.score = 0;
+      this.answered = false;
+      this.selectedChoice = null;
+      this.quizCompleted = false;
+      this.allAnswers = [];
+      this.selectedCategory = null;
+      
+      // ゲストモード状態の取得
+      this.isGuestMode = this.$store.getters['quiz/isGuestMode'] || 
+                        localStorage.getItem('quizMode') === 'guest' ||
+                        this.$route.query.mode === 'guest';
+                        
+      console.log('クイズ初期化完了:', {
+        isGuestMode: this.isGuestMode,
+        isAuthenticated: this.isAuthenticated
+      });
+      
+      // カテゴリを取得
+      this.fetchCategories();
     }
   },
   created() {
-    // fetchCategoriesはここで一度だけ呼び出す
-    this.fetchCategories();
+    console.log('Quizコンポーネント作成...');
     
-    // コンポーネント初期化時にデータをリセット
-    this.questions = [];
-    this.questionIndex = 0;
-    this.score = 0;
-    this.answered = false;
-    this.selectedChoice = null;
-    this.quizCompleted = false;
-    this.allAnswers = [];
-    this.selectedCategory = null;
+    // ナビゲーションガードが処理するので、ここではクイズ初期化だけを行う
+    this.initQuiz();
+  },
+  mounted() {
+    // マウント後に認証チェック（Vuexストアの値が確実に利用可能）
+    if (!this.isGuestMode && !this.isAuthenticated) {
+      console.log('認証されていないユーザー。ログインページにリダイレクト');
+      this.$router.push('/login');
+    } else {
+      console.log('認証済みまたはゲストモード。クイズ表示OK');
+    }
   }
 };
 </script>
@@ -560,5 +639,43 @@ export default {
 .loading {
   text-align: center;
   margin-top: 50px;
+}
+
+.guest-mode-indicator {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 8px 12px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.login-link {
+  color: #0056b3;
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+.guest-notice {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.guest-mode-banner {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
 }
 </style>

@@ -1,12 +1,13 @@
 // src/store/index.js
-import { createStore } from 'vuex'
-import auth from './modules/auth'
+import { createStore } from 'vuex';
+import auth from './modules/auth';
+import quiz from './modules/quiz';
 
-// storeをエクスポートする前に明示的に作成する
-const store = createStore({
+// Vue.use(Vuex) は Vue 3では不要
+
+export default createStore({
   modules: {
-    auth
+    auth,
+    quiz
   }
-})
-
-export default store
+});

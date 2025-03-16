@@ -59,22 +59,48 @@ const router = createRouter({
   routes
 });
 
-// ナビゲーションガード
+// このルートには認証が必要
+const authRequiredRoutes = ['profile', 'history', 'leaderboard'];
+
+// ゲストモードでもアクセス可能なルート
+const guestAccessibleRoutes = ['quiz'];
+
+// ナビゲーションガードを修正
 router.beforeEach((to, from, next) => {
+  // Vue 3ではrouter.app.$storeではアクセスできない
+  // 直接インポートしたstoreを使用
   const isAuthenticated = store.getters['auth/isAuthenticated'];
+  const isGuestMode = store.getters['quiz/isGuestMode'] || 
+                     localStorage.getItem('quizMode') === 'guest' ||
+                     to.query.mode === 'guest';
   
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (!isAuthenticated) {
-      next({
-        path: '/login',
-        query: { redirect: to.fullPath }
-      });
-    } else {
-      next();
-    }
-  } else {
-    next();
+  // デバッグ用
+  console.log('ルーターナビゲーションガードのチェック:', {
+    route: to.name,
+    isAuthenticated,
+    isGuestMode,
+    authRequired: authRequiredRoutes.includes(to.name),
+    guestAccessible: guestAccessibleRoutes.includes(to.name)
+  });
+  
+  // 認証が必要なルートで未認証の場合
+  if (authRequiredRoutes.includes(to.name) && !isAuthenticated) {
+    next({ name: 'login', query: { redirect: to.fullPath } });
+    return;
   }
+  
+  // ゲストモードでアクセス可能なルートの場合
+  if (guestAccessibleRoutes.includes(to.name) && (isGuestMode || isAuthenticated)) {
+    // ゲストモードフラグをVuexに保存して一貫性を保つ
+    if (isGuestMode && !store.getters['quiz/isGuestMode']) {
+      store.commit('quiz/SET_GUEST_MODE', true);
+    }
+    next();
+    return;
+  }
+  
+  // それ以外の通常ルートはそのまま遷移
+  next();
 });
 
 export default router;
