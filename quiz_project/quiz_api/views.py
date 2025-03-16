@@ -3,7 +3,7 @@ from rest_framework import viewsets, permissions, generics
 from .models import Category, Question, Choice, QuizAttempt
 from .serializers import CategorySerializer, QuestionSerializer, ChoiceSerializer, RegisterSerializer, UserSerializer, SaveQuizResultSerializer, QuizAttemptSerializer, UserLeaderboardSerializer, UserStatsSerializer
 from django.contrib.auth.models import User
-from django.db.models import Avg, Count, Sum, F, ExpressionWrapper, FloatField, Q, Case, When, Value
+from django.db.models import Avg, Count, Sum, Max, F, ExpressionWrapper, FloatField, Q, Case, When, Value
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all().order_by('name')  # 名前でソート
@@ -97,25 +97,66 @@ class UserStatsView(generics.RetrieveAPIView):
     def get_object(self):
         user = self.request.user
         
-        # シンプルな統計計算
-        attempts = QuizAttempt.objects.filter(user=user)
-        categories_played = attempts.values('category').distinct().count()
-        
-        # ベストカテゴリーを取得（平均パーセンテージが最も高いもの）
-        best_category = None
-        if attempts.exists():
-            category_avg = attempts.values('category__name').annotate(
-                avg=Avg('percentage')
-            ).order_by('-avg')
-            if category_avg:
-                best_category = category_avg[0]['category__name']
-        
-        # 全体統計
-        overall_stats = {
-            'total_attempts': attempts.count(),
-            'total_categories_played': categories_played,
-            'best_category': best_category,
-            'avg_percentage': attempts.aggregate(avg=Avg('percentage'))['avg'] or 0
-        }
-        
-        return overall_stats
+        try:
+            # シンプルな統計計算
+            attempts = QuizAttempt.objects.filter(user=user)
+            
+            # ベストカテゴリーを取得（平均スコアが最も高いもの）
+            best_category = None
+            category_stats = []
+            
+            # カテゴリー別の統計を計算
+            if attempts.exists():
+                # percentage フィールドの代わりに計算式を使用
+                categories = attempts.values('category', 'category__name').distinct()
+                
+                for cat in categories:
+                    cat_attempts = attempts.filter(category=cat['category'])
+                    cat_score_sum = cat_attempts.aggregate(Sum('score'))['score__sum'] or 0
+                    cat_questions_sum = cat_attempts.aggregate(Sum('total_questions'))['total_questions__sum'] or 1
+                    cat_percentage = (cat_score_sum / cat_questions_sum) * 100 if cat_questions_sum > 0 else 0
+                    
+                    cat_stats = {
+                        'id': cat['category'],
+                        'name': cat['category__name'],
+                        'attempts_count': cat_attempts.count(),
+                        'best_score': cat_attempts.aggregate(Max('score'))['score__max'] or 0,
+                        'avg_percentage': round(cat_percentage, 1)
+                    }
+                    category_stats.append(cat_stats)
+                    
+                # 最高パーセンテージのカテゴリーを特定
+                if category_stats:
+                    best_cat = max(category_stats, key=lambda x: x['avg_percentage'])
+                    best_category = best_cat['name']
+            
+            # 全体の平均パーセンテージを計算
+            total_score = attempts.aggregate(Sum('score'))['score__sum'] or 0
+            total_questions = attempts.aggregate(Sum('total_questions'))['total_questions__sum'] or 1
+            avg_percentage = (total_score / total_questions) * 100 if total_questions > 0 else 0
+            
+            # 全体統計
+            overall_stats = {
+                'total_attempts': attempts.count(),
+                'total_categories_played': attempts.values('category').distinct().count(),
+                'best_category': best_category,
+                'avg_percentage': round(avg_percentage, 1),
+                'category_stats': category_stats  # カテゴリー統計を追加
+            }
+            
+            return overall_stats
+            
+        except Exception as e:
+            # エラーのロギングと最小限のデータを返す
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in UserStatsView: {str(e)}")
+            
+            return {
+                'total_attempts': 0,
+                'total_categories_played': 0,
+                'best_category': None,
+                'avg_percentage': 0,
+                'category_stats': [],
+                'error': "統計情報の計算中にエラーが発生しました"
+            }

@@ -150,11 +150,25 @@
     methods: {
       async fetchUserStats() {
         try {
-          // $http ではなく api を使用
+          // デバッグログを追加
+          console.log('ユーザー統計の取得を開始します');
+          
           const response = await api.get('/api/user/stats/');
+          
+          // レスポンスの詳細をログ出力
+          console.log('ユーザー統計APIのレスポンス:', response);
+          console.log('stats.category_stats:', response.data.category_stats);
+          console.log('category_stats配列の長さ:', response.data.category_stats?.length || 0);
+          
           this.stats = response.data;
         } catch (error) {
           console.error('ユーザー統計の取得に失敗しました:', error);
+          
+          // エラーの詳細をログ出力
+          if (error.response) {
+            console.error('エラーレスポンス:', error.response.data);
+            console.error('ステータスコード:', error.response.status);
+          }
         } finally {
           this.loading = false;
         }
