@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter, SimpleRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from quiz_api.views import CategoryViewSet, QuestionViewSet, SaveQuizResultView, QuizHistoryView, QuizAttemptDetailView, LeaderboardView, UserStatsView, RegisterView, UserProfileView
+from quiz_api.views import CategoryViewSet, QuestionViewSet, SaveQuizResultView, QuizHistoryView, QuizAttemptDetailView, LeaderboardView, UserStatsView, RegisterView, UserProfileView, PublicLeaderboardView
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
@@ -48,4 +48,6 @@ urlpatterns += [
 #ユーザープロフィールとパフォーマンス統計
 urlpatterns += [
     path('api/user/stats/', UserStatsView.as_view(), name='user_stats'),
+    # 公開リーダーボード用のURLを追加
+    path('api/public/leaderboard/', PublicLeaderboardView.as_view(), name='public-leaderboard'),
 ]

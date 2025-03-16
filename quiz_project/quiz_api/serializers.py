@@ -3,6 +3,9 @@ from rest_framework import serializers
 from .models import Category, Question, Choice, QuizAttempt, QuestionResponse
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class ChoiceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -155,3 +158,12 @@ class UserStatsSerializer(serializers.Serializer):
     best_category = serializers.CharField(allow_null=True)
     avg_percentage = serializers.FloatField()
     category_stats = serializers.ListField(child=serializers.DictField())
+
+# quiz_api/serializers.py
+class PublicLeaderboardSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(read_only=True)
+    avg_percentage = serializers.FloatField(read_only=True)
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'avg_percentage']

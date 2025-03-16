@@ -1,9 +1,13 @@
 # quiz_api/views.py
 from rest_framework import viewsets, permissions, generics
 from .models import Category, Question, Choice, QuizAttempt
-from .serializers import CategorySerializer, QuestionSerializer, ChoiceSerializer, RegisterSerializer, UserSerializer, SaveQuizResultSerializer, QuizAttemptSerializer, UserLeaderboardSerializer, UserStatsSerializer
+from .serializers import CategorySerializer, QuestionSerializer, ChoiceSerializer, RegisterSerializer, UserSerializer, SaveQuizResultSerializer, QuizAttemptSerializer, UserLeaderboardSerializer, UserStatsSerializer, PublicLeaderboardSerializer
 from django.contrib.auth.models import User
 from django.db.models import Avg, Count, Sum, Max, F, ExpressionWrapper, FloatField, Q, Case, When, Value
+from rest_framework.permissions import AllowAny
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all().order_by('name')  # 名前でソート
@@ -160,3 +164,35 @@ class UserStatsView(generics.RetrieveAPIView):
                 'category_stats': [],
                 'error': "統計情報の計算中にエラーが発生しました"
             }
+
+class PublicLeaderboardView(generics.ListAPIView):
+    """公開用リーダーボード（認証不要）"""
+    permission_classes = [AllowAny]
+    serializer_class = PublicLeaderboardSerializer
+    
+    def get_queryset(self):
+        try:
+            # 上位10名のデータを返す
+            return User.objects.annotate(
+                total_attempts=Count('quiz_attempts'),
+                total_score=Sum('quiz_attempts__score', default=0),
+                total_questions=Sum('quiz_attempts__total_questions', default=0),
+                avg_percentage=Case(
+                    When(total_questions__gt=0, 
+                        then=ExpressionWrapper(
+                            F('total_score') * 100.0 / F('total_questions'), 
+                            output_field=FloatField()
+                        )
+                    ),
+                    default=Value(0.0),
+                    output_field=FloatField()
+                )
+            ).filter(total_attempts__gt=0).order_by('-avg_percentage')[:10]
+        
+        except Exception as e:
+            # エラーを出力
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in PublicLeaderboardView: {str(e)}")
+            # 空のクエリセットを返す
+            return User.objects.none()
