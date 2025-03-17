@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'quiz_api',
     'django_extensions',
+    'import_export',
 ]
 
 MIDDLEWARE = [
