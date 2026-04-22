@@ -3,7 +3,7 @@ from . import views
 from .views import (
     CategoryViewSet, QuestionViewSet, RegisterView, UserProfileView,
     SaveQuizResultView, QuizHistoryView, QuizAttemptDetailView,
-    LeaderboardView, UserStatsView  # LeaderboardViewを追加
+    LeaderboardView, UserStatsView, PublicLeaderboardView  # PublicLeaderboardViewを追加
 )
 from rest_framework.routers import DefaultRouter
 
@@ -17,7 +17,8 @@ urlpatterns = [
     path('quiz/save-result/', SaveQuizResultView.as_view(), name='save-quiz-result'),
     path('quiz/history/', QuizHistoryView.as_view(), name='quiz-history'),
     path('quiz/attempt/<int:pk>/', QuizAttemptDetailView.as_view(), name='quiz-attempt-detail'),
-    path('quiz/leaderboard/', LeaderboardView.as_view(), name='leaderboard'),  # この行を追加
+    path('quiz/leaderboard/', PublicLeaderboardView.as_view(), name='public-leaderboard'),  # 公開リーダーボード
+    path('quiz/leaderboard/authenticated/', LeaderboardView.as_view(), name='leaderboard'),  # 認証必要なリーダーボード
     path('user/stats/', UserStatsView.as_view(), name='user-stats'),  # ユーザー統計のパスも追加
 ]
 

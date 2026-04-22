@@ -203,7 +203,6 @@ export default {
         
         // APIからカテゴリーデータを取得
         const response = await axios.get('http://localhost:8000/api/categories/');
-        console.log('カテゴリデータ:', response.data);
         
         // レスポンスフォーマットの確認と処理
         let categoryData = [];
@@ -246,8 +245,6 @@ export default {
         
         // 公開エンドポイントを使用
         const response = await axios.get('http://localhost:8000/api/public/leaderboard/');
-        
-        console.log('リーダーボードデータ:', response.data);
         
         // レスポンスフォーマットの確認と処理
         if (Array.isArray(response.data)) {

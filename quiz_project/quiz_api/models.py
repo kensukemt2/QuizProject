@@ -1,7 +1,7 @@
 # quiz_api/models.py
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models import Index
+from django.core.validators import FileExtensionValidator
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -15,6 +15,12 @@ class Category(models.Model):
 class Question(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='questions')
     text = models.CharField(max_length=500)
+    image = models.ImageField(
+        upload_to='question_images/',
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'webp'])],
+    )
     
     def __str__(self):
         return self.text
@@ -37,8 +43,11 @@ class QuizAttempt(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        # インデックスを削除し、orderingのみ残す
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at'], name='idx_attempt_user_created'),
+            models.Index(fields=['category'], name='idx_attempt_category'),
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.category.name} - {self.score}/{self.total_questions}"
@@ -51,3 +60,22 @@ class QuestionResponse(models.Model):
     
     def __str__(self):
         return f"{self.quiz_attempt.user.username} - {self.question.text[:30]} - {'正解' if self.is_correct else '不正解'}"
+
+
+class QuizSession(models.Model):
+    """クイズセッション管理"""
+    session_id = models.CharField(max_length=100, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True)
+    used_questions = models.ManyToManyField(Question, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'quiz_api_quiz_session'
+        indexes = [
+            models.Index(fields=['user', '-updated_at'], name='idx_session_user_updated'),
+        ]
+    
+    def __str__(self):
+        return f"Session {self.session_id} - {self.used_questions.count()} questions used"

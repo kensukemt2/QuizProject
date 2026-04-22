@@ -1,0 +1,313 @@
+<!-- templates/admin/quiz_api/question/unified_form.html -->
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extrahead %}
+<style>
+.unified-form {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.choice-group {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.choice-group h3 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.choice-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.choice-row label {
+    min-width: 80px;
+    font-weight: 500;
+}
+
+.choice-row input[type="text"] {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+.choice-row input[type="checkbox"] {
+    transform: scale(1.2);
+}
+
+.correct-choice input[type="text"] {
+    background-color: #d4edda;
+    border-color: #28a745;
+}
+
+.validation-message {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.validation-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.validation-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.form-row {
+    margin-bottom: 15px;
+}
+
+.form-row label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-row input[type="text"], .form-row input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+.submit-row {
+    background: #f8f9fa;
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.submit-row input, .submit-row a {
+    margin: 0 5px;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.submit-row input.default {
+    background-color: #007cba;
+    color: white;
+}
+
+.submit-row .button {
+    background-color: #6c757d;
+    color: white;
+}
+
+.submit-row .deletelink {
+    background-color: #dc3545;
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="unified-form">
+    <h1>{{ title }}</h1>
+    
+    {% if form.non_field_errors %}
+        <div class="validation-message error">
+            {% for error in form.non_field_errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <fieldset>
+            <h2>質問情報</h2>
+            <div class="form-row">
+                <label for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
+                {{ form.text }}
+                {% if form.text.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.text.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <div class="form-row">
+                <label for="{{ form.image.id_for_label }}">{{ form.image.label }}</label>
+                {{ form.image }}
+                {% if form.image.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.image.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </fieldset>
+        
+        <fieldset>
+            <h2>選択肢設定</h2>
+            
+            <div class="choice-group">
+                <h3>必須選択肢</h3>
+                <div class="choice-row">
+                    <label for="{{ form.choice1_text.id_for_label }}">{{ form.choice1_text.label }}</label>
+                    {{ form.choice1_text }}
+                    <label for="{{ form.choice1_correct.id_for_label }}">{{ form.choice1_correct.label }}</label>
+                    {{ form.choice1_correct }}
+                </div>
+                <div class="choice-row">
+                    <label for="{{ form.choice2_text.id_for_label }}">{{ form.choice2_text.label }}</label>
+                    {{ form.choice2_text }}
+                    <label for="{{ form.choice2_correct.id_for_label }}">{{ form.choice2_correct.label }}</label>
+                    {{ form.choice2_correct }}
+                </div>
+            </div>
+            
+            <div class="choice-group">
+                <h3>オプション選択肢</h3>
+                <div class="choice-row">
+                    <label for="{{ form.choice3_text.id_for_label }}">{{ form.choice3_text.label }}</label>
+                    {{ form.choice3_text }}
+                    <label for="{{ form.choice3_correct.id_for_label }}">{{ form.choice3_correct.label }}</label>
+                    {{ form.choice3_correct }}
+                </div>
+                <div class="choice-row">
+                    <label for="{{ form.choice4_text.id_for_label }}">{{ form.choice4_text.label }}</label>
+                    {{ form.choice4_text }}
+                    <label for="{{ form.choice4_correct.id_for_label }}">{{ form.choice4_correct.label }}</label>
+                    {{ form.choice4_correct }}
+                </div>
+                <div class="choice-row">
+                    <label for="{{ form.choice5_text.id_for_label }}">{{ form.choice5_text.label }}</label>
+                    {{ form.choice5_text }}
+                    <label for="{{ form.choice5_correct.id_for_label }}">{{ form.choice5_correct.label }}</label>
+                    {{ form.choice5_correct }}
+                </div>
+                <div class="choice-row">
+                    <label for="{{ form.choice6_text.id_for_label }}">{{ form.choice6_text.label }}</label>
+                    {{ form.choice6_text }}
+                    <label for="{{ form.choice6_correct.id_for_label }}">{{ form.choice6_correct.label }}</label>
+                    {{ form.choice6_correct }}
+                </div>
+            </div>
+        </fieldset>
+        
+        <div class="submit-row">
+            <input type="submit" value="保存" class="default" name="_save">
+            {% if has_delete_permission and object_id %}
+                <a href="/quiz-admin/quiz_api/question/{{ object_id }}/delete/" class="deletelink">削除</a>
+            {% endif %}
+            <a href="/quiz-admin/quiz_api/question/" class="button">質問一覧に戻る</a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 正解チェックボックスの排他制御
+    const correctCheckboxes = document.querySelectorAll('input[id$="_correct"]');
+    
+    correctCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                correctCheckboxes.forEach(cb => {
+                    if (cb !== this) cb.checked = false;
+                });
+            }
+            updateChoiceHighlight();
+            validateForm();
+        });
+    });
+    
+    // テキストフィールドの変更監視
+    const textFields = document.querySelectorAll('input[id$="_text"]');
+    textFields.forEach(field => {
+        field.addEventListener('input', function() {
+            validateForm();
+        });
+    });
+    
+    function updateChoiceHighlight() {
+        const rows = document.querySelectorAll('.choice-row');
+        rows.forEach(row => {
+            row.classList.remove('correct-choice');
+            const checkbox = row.querySelector('input[type="checkbox"]');
+            if (checkbox && checkbox.checked) {
+                row.classList.add('correct-choice');
+            }
+        });
+    }
+    
+    function validateForm() {
+        // 既存のメッセージを削除
+        const existingMessages = document.querySelectorAll('.validation-message:not(.error)');
+        existingMessages.forEach(msg => msg.remove());
+        
+        let choiceCount = 0;
+        let correctCount = 0;
+        
+        for (let i = 1; i <= 6; i++) {
+            const textField = document.querySelector(`#id_choice${i}_text`);
+            const checkField = document.querySelector(`#id_choice${i}_correct`);
+            
+            if (textField && textField.value.trim()) {
+                choiceCount++;
+                if (checkField && checkField.checked) {
+                    correctCount++;
+                }
+            }
+        }
+        
+        const form = document.querySelector('form');
+        let message = '';
+        let messageClass = '';
+        
+        if (choiceCount < 2) {
+            message = '最低2つの選択肢が必要です';
+            messageClass = 'error';
+        } else if (correctCount === 0) {
+            message = '正解を1つ選択してください';
+            messageClass = 'error';
+        } else if (correctCount > 1) {
+            message = '正解は1つだけ選択してください';
+            messageClass = 'error';
+        } else {
+            message = '✓ 正しく設定されています';
+            messageClass = 'success';
+        }
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `validation-message ${messageClass}`;
+        messageDiv.textContent = message;
+        form.insertBefore(messageDiv, form.querySelector('.submit-row'));
+    }
+    
+    // 初期化
+    updateChoiceHighlight();
+    validateForm();
+});
+</script>
+{% endblock %}

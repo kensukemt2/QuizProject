@@ -1,0 +1,156 @@
+<!-- templates/admin/quiz_api/category/unified_import.html -->
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<div class="module">
+    <h2>使用方法</h2>
+    <div class="help">
+        <p><strong>CSVファイルの形式:</strong></p>
+        <pre>カテゴリー,質問,選択肢1,選択肢2,選択肢3,選択肢4,選択肢5,選択肢6,正解番号</pre>
+        
+        <p><strong>サンプルデータ:</strong></p>
+        <pre>数学,2+2は?,2,3,4,5,,3
+数学,3×3は?,6,9,12,15,,2
+英語,appleの意味は?,りんご,みかん,バナナ,ぶどう,,1
+地理,日本の首都は?,東京,大阪,名古屋,福岡,京都,神戸,1</pre>
+        
+        <p><strong>注意事項:</strong></p>
+        <ul>
+            <li>選択肢は最低2個、最大6個まで対応</li>
+            <li>正解番号は1から始まる数字で指定</li>
+            <li>同じ質問が既に存在する場合、選択肢は上書きされます</li>
+            <li>CSVファイルはUTF-8またはShift_JISエンコーディングに対応</li>
+        </ul>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="module">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+        <div class="form-row">
+            {{ form.csv_file.label_tag }}
+            {{ form.csv_file }}
+            {% if form.csv_file.help_text %}
+                <p class="help">{{ form.csv_file.help_text }}</p>
+            {% endif %}
+            {% if form.csv_file.errors %}
+                <ul class="errorlist">
+                    {% for error in form.csv_file.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </fieldset>
+    
+    <fieldset class="module aligned">
+        <div class="form-row">
+            {{ form.preview_only.label_tag }}
+            {{ form.preview_only }}
+            {% if form.preview_only.help_text %}
+                <p class="help">{{ form.preview_only.help_text }}</p>
+            {% endif %}
+        </div>
+    </fieldset>
+    
+    <div class="submit-row">
+        <input type="submit" value="プレビュー" class="button" name="_preview" onclick="document.getElementById('id_preview_only').checked=true;">
+        <input type="submit" value="CSVファイルをインポート" class="default" name="_import" onclick="document.getElementById('id_preview_only').checked=false;">
+        <a href="../" class="button cancel-link">キャンセル</a>
+    </div>
+</form>
+
+{% if preview_data %}
+<div class="module">
+    <h2>インポートプレビュー (最初の10行)</h2>
+    <p><strong>総行数:</strong> {{ total_rows }}行</p>
+    
+    {% if validation_errors %}
+        <div class="messagelist">
+            <div class="warning">
+                <strong>バリデーションエラー:</strong>
+                <ul>
+                    {% for error in validation_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+    
+    {% if duplicate_warnings %}
+        <div class="messagelist">
+            <div class="warning">
+                <strong>重複警告:</strong>
+                <ul>
+                    {% for warning in duplicate_warnings %}
+                        <li>{{ warning }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+    
+    <table class="preview-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <thead>
+            <tr style="background-color: #f8f8f8;">
+                <th style="border: 1px solid #ddd; padding: 8px;">行</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">カテゴリー</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">質問</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">選択肢</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">正解</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">状態</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in preview_data %}
+                <tr {% if 'エラー' in item.status %}style="background-color: #ffe6e6;"{% endif %}>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ item.row_num }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ item.category }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ item.question }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">
+                        {% for choice in item.choices %}
+                            {{ forloop.counter }}. {{ choice }}<br>
+                        {% endfor %}
+                    </td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ item.correct_answer }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">
+                        {% if item.status == 'OK' %}
+                            <span style="color: green;">✓ {{ item.status }}</span>
+                        {% else %}
+                            <span style="color: red;">✗ {{ item.status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    {% if total_rows > 10 %}
+        <p style="margin-top: 10px;"><em>※ {{ total_rows|add:"-10" }}行のデータが省略されています</em></p>
+    {% endif %}
+    
+    <div style="margin-top: 20px;">
+        <p style="color: #666; font-size: 12px;">※プレビューに問題がなければ、上記のフォームからCSVファイルを再度アップロードして「CSVファイルをインポート」ボタンを押してください</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="module">
+    <h2>サンプルCSVダウンロード</h2>
+    <p>以下のデータをコピーしてCSVファイルとして保存し、テストに使用できます:</p>
+    <textarea readonly style="width: 100%; height: 200px; font-family: monospace;">カテゴリー,質問,選択肢1,選択肢2,選択肢3,選択肢4,選択肢5,選択肢6,正解番号
+数学,2+2は?,2,3,4,5,,,3
+数学,5×6は?,25,30,35,40,,,2
+数学,10÷2は?,3,4,5,6,,,3
+英語,catの意味は?,犬,猫,鳥,魚,,,2
+英語,dogの意味は?,犬,猫,鳥,魚,,,1
+理科,水の化学式は?,H2O,CO2,NaCl,O2,,,1
+地理,世界最大の大陸は?,アジア,アフリカ,北アメリカ,南アメリカ,ヨーロッパ,オーストラリア,1</textarea>
+</div>
+
+{% endblock %}

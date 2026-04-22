@@ -26,6 +26,20 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media
+staticfiles/
+
+# 環境変数ファイル (本番用の秘密情報を含む)
+.env
+.env.*
+*.env
+!.env.example
+
+# 環境別設定ファイル
+/quiz_project/settings/local.py
+
+# データベースバックアップ
+*.sql
+backup_*.sql
 
 # Vue.js / Node
 node_modules/

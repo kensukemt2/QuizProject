@@ -9,6 +9,9 @@ import QuizComponent from '../components/Quiz.vue';
 import HistoryComponent from '../components/History.vue';
 import LeaderboardComponent from '../components/Leaderboard.vue';
 import ProfileComponent from '../components/Profile.vue';
+import PrivacyPolicy from '../components/PrivacyPolicy.vue';
+import Contact from '../components/Contact.vue';
+import About from '../components/About.vue';
 
 const routes = [
   {
@@ -51,6 +54,21 @@ const routes = [
     name: 'profile',
     component: ProfileComponent,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/privacy',
+    name: 'privacy',
+    component: PrivacyPolicy
+  },
+  {
+    path: '/contact',
+    name: 'contact',
+    component: Contact
+  },
+  {
+    path: '/about',
+    name: 'about',
+    component: About
   }
 ];
 
@@ -74,14 +92,6 @@ router.beforeEach((to, from, next) => {
                      localStorage.getItem('quizMode') === 'guest' ||
                      to.query.mode === 'guest';
   
-  // デバッグ用
-  console.log('ルーターナビゲーションガードのチェック:', {
-    route: to.name,
-    isAuthenticated,
-    isGuestMode,
-    authRequired: authRequiredRoutes.includes(to.name),
-    guestAccessible: guestAccessibleRoutes.includes(to.name)
-  });
   
   // 認証が必要なルートで未認証の場合
   if (authRequiredRoutes.includes(to.name) && !isAuthenticated) {
@@ -91,8 +101,12 @@ router.beforeEach((to, from, next) => {
   
   // ゲストモードでアクセス可能なルートの場合
   if (guestAccessibleRoutes.includes(to.name) && (isGuestMode || isAuthenticated)) {
-    // ゲストモードフラグをVuexに保存して一貫性を保つ
-    if (isGuestMode && !store.getters['quiz/isGuestMode']) {
+    // 認証済みユーザーの場合はゲストモードを無効にする
+    if (isAuthenticated) {
+      store.commit('quiz/SET_GUEST_MODE', false);
+      localStorage.removeItem('quizMode');
+    } else if (isGuestMode && !store.getters['quiz/isGuestMode']) {
+      // ゲストモードフラグをVuexに保存して一貫性を保つ
       store.commit('quiz/SET_GUEST_MODE', true);
     }
     next();

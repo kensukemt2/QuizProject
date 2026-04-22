@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>システム監査レポート - Quiz Project</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header {
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .meta {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .summary h2 {
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+
+        h3 {
+            color: #34495e;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .issue {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .issue.critical {
+            border-left-color: #e74c3c;
+            background: #fef5f5;
+        }
+
+        .issue.high {
+            border-left-color: #f39c12;
+            background: #fef9f5;
+        }
+
+        .issue.medium {
+            border-left-color: #f1c40f;
+            background: #fefef5;
+        }
+
+        .issue.low {
+            border-left-color: #95a5a6;
+            background: #f9f9f9;
+        }
+
+        .issue.good {
+            border-left-color: #27ae60;
+            background: #f0f9f4;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .badge.critical {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .badge.high {
+            background: #f39c12;
+            color: white;
+        }
+
+        .badge.medium {
+            background: #f1c40f;
+            color: #333;
+        }
+
+        .badge.low {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .badge.good {
+            background: #27ae60;
+            color: white;
+        }
+
+        .issue-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .issue-description {
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .issue-detail {
+            background: rgba(0,0,0,0.03);
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #34495e;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .status-icon {
+            font-size: 1.2em;
+        }
+
+        .action-plan {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .phase {
+            margin-bottom: 20px;
+        }
+
+        .phase-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>システム監査レポート</h1>
+            <div class="meta">
+                <p><strong>システム名:</strong> Quiz Project (クイズ管理システム)</p>
+                <p><strong>監査実施日時:</strong> 2025-11-17 00:02:39</p>
+                <p><strong>監査バージョン:</strong> 1.0</p>
+            </div>
+        </header>
+
+        <div class="summary">
+            <h2>エグゼクティブサマリー</h2>
+            <p>総合評価: <strong>⚠️ 要改善</strong></p>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number">1</div>
+                    <div class="stat-label">🔴 Critical</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">6</div>
+                    <div class="stat-label">🟠 High</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">2</div>
+                    <div class="stat-label">🟡 Medium</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">1</div>
+                    <div class="stat-label">🟢 Low</div>
+                </div>
+            </div>
+        </div>
+
+        <h2>1. セキュリティ監査</h2>
+
+        <h3>🔴 Critical Issues (致命的な問題)</h3>
+
+        <div class="issue critical">
+            <div class="issue-title">
+                <span class="badge critical">CRITICAL</span>
+                SECRET_KEYの脆弱性
+            </div>
+            <div class="issue-description">
+                SECRET_KEYが'django-insecure-'で始まっており、開発用の自動生成キーが使用されている
+            </div>
+            <div class="issue-detail">
+                <strong>影響:</strong> セキュリティ機能が攻撃に対して脆弱<br>
+                <strong>場所:</strong> quiz_project/settings.py:24<br>
+                <strong>推奨対応:</strong> 50文字以上のランダムな文字列を生成し、環境変数で管理
+            </div>
+        </div>
+
+        <h3>🟠 High Issues (重大な問題)</h3>
+
+        <div class="issue high">
+            <div class="issue-title">
+                <span class="badge high">HIGH</span>
+                DEBUG設定が本番環境で有効化される可能性
+            </div>
+            <div class="issue-description">
+                DEBUG設定のデフォルト値がTrueになっている
+            </div>
+            <div class="issue-detail">
+                <strong>影響:</strong> 本番環境でDEBUGがTrueの場合、内部情報が漏洩する<br>
+                <strong>推奨対応:</strong> デフォルト値を'False'に変更
+            </div>
+        </div>
+
+        <div class="issue high">
+            <div class="issue-title">
+                <span class="badge high">HIGH</span>
+                ALLOWED_HOSTSが空の可能性
+            </div>
+            <div class="issue-description">
+                環境変数が設定されていない場合、ALLOWED_HOSTSが空リストになる
+            </div>
+            <div class="issue-detail">
+                <strong>影響:</strong> Host Headerインジェクション攻撃のリスク<br>
+                <strong>推奨対応:</strong> 本番環境用のデフォルト値を設定
+            </div>
+        </div>
+
+        <div class="issue high">
+            <div class="issue-title">
+                <span class="badge high">HIGH</span>
+                HTTPS/SSL関連設定の欠如
+            </div>
+            <div class="issue-description">
+                SECURE_HSTS_SECONDS, SECURE_SSL_REDIRECT, SESSION_COOKIE_SECURE, CSRF_COOKIE_SECUREが設定されていない
+            </div>
+            <div class="issue-detail">
+                <strong>影響:</strong> 中間者攻撃やセッションハイジャックのリスク<br>
+                <strong>推奨対応:</strong> 本番環境で以下を追加
+                <div class="code">SECURE_HSTS_SECONDS = 31536000  # 1年
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True</div>
+            </div>
+        </div>
+
+        <div class="issue high">
+            <div class="issue-title">
+                <span class="badge high">HIGH</span>
+                Pillowライブラリの欠如
+            </div>
+            <div class="issue-description">
+                ImageFieldを使用しているがPillowがインストールされていない
+            </div>
+            <div class="issue-detail">
+                <strong>影響:</strong> 画像アップロード機能が動作しない<br>
+                <strong>推奨対応:</strong> pip install Pillowを実行
+            </div>
+        </div>
+
+        <h2>2. データベース整合性監査</h2>
+
+        <div class="issue good">
+            <div class="issue-title">
+                <span class="badge good">✓ GOOD</span>
+                データ整合性チェック結果
+            </div>
+            <div class="issue-description">
+                データベースの整合性は良好です
+            </div>
+            <div class="issue-detail">
+                <ul>
+                    <li>✅ カテゴリー数: 8</li>
+                    <li>✅ 質問数: 332</li>
+                    <li>✅ 選択肢数: 1,324</li>
+                    <li>✅ 正解が設定されていない質問: なし</li>
+                    <li>✅ 選択肢が2つ未満の質問: なし</li>
+                    <li>✅ 複数の正解がある質問: なし</li>
+                    <li>✅ カテゴリーに質問がないもの: なし</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>3. 監査チェックリスト</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>カテゴリー</th>
+                    <th>項目</th>
+                    <th>状態</th>
+                    <th>優先度</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>セキュリティ</td>
+                    <td>SECRET_KEY</td>
+                    <td><span class="status-icon">❌</span></td>
+                    <td><span class="badge critical">Critical</span></td>
+                </tr>
+                <tr>
+                    <td>セキュリティ</td>
+                    <td>DEBUG設定</td>
+                    <td><span class="status-icon">⚠️</span></td>
+                    <td><span class="badge high">High</span></td>
+                </tr>
+                <tr>
+                    <td>セキュリティ</td>
+                    <td>ALLOWED_HOSTS</td>
+                    <td><span class="status-icon">⚠️</span></td>
+                    <td><span class="badge high">High</span></td>
+                </tr>
+                <tr>
+                    <td>セキュリティ</td>
+                    <td>HTTPS/SSL設定</td>
+                    <td><span class="status-icon">❌</span></td>
+                    <td><span class="badge high">High</span></td>
+                </tr>
+                <tr>
+                    <td>セキュリティ</td>
+                    <td>パスワード検証</td>
+                    <td><span class="status-icon">✅</span></td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td>セキュリティ</td>
+                    <td>JWT設定</td>
+                    <td><span class="status-icon">✅</span></td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td>データ整合性</td>
+                    <td>正解設定</td>
+                    <td><span class="status-icon">✅</span></td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td>データ整合性</td>
+                    <td>選択肢数</td>
+                    <td><span class="status-icon">✅</span></td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td>依存関係</td>
+                    <td>Pillow</td>
+                    <td><span class="status-icon">❌</span></td>
+                    <td><span class="badge high">High</span></td>
+                </tr>
+                <tr>
+                    <td>コード品質</td>
+                    <td>アーキテクチャ</td>
+                    <td><span class="status-icon">✅</span></td>
+                    <td>-</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>4. 推奨改善アクションプラン</h2>
+
+        <div class="action-plan">
+            <div class="phase">
+                <div class="phase-title">📌 フェーズ1: 緊急対応 (1週間以内)</div>
+                <ul>
+                    <li><strong>SECRET_KEYの変更:</strong> 新しいランダムキーを生成し、環境変数で管理</li>
+                    <li><strong>Pillowのインストール:</strong> pip install Pillowを実行</li>
+                    <li><strong>DEBUG設定の修正:</strong> デフォルト値を'False'に変更</li>
+                </ul>
+            </div>
+
+            <div class="phase">
+                <div class="phase-title">🔒 フェーズ2: セキュリティ強化 (2週間以内)</div>
+                <ul>
+                    <li><strong>HTTPS/SSL設定の追加:</strong> 本番環境用のセキュリティ設定を追加</li>
+                    <li><strong>ALLOWED_HOSTSの設定:</strong> 本番ドメインを環境変数で設定</li>
+                    <li><strong>CORS設定の更新:</strong> 本番フロントエンドURLを環境変数で管理</li>
+                </ul>
+            </div>
+
+            <div class="phase">
+                <div class="phase-title">🚀 フェーズ3: 長期改善 (1ヶ月以内)</div>
+                <ul>
+                    <li><strong>データベースバックアップ戦略:</strong> 自動バックアップスクリプトの作成</li>
+                    <li><strong>本番環境への準備:</strong> PostgreSQL/MySQLへの移行検討</li>
+                    <li><strong>監視・ログ機能:</strong> アプリケーションログの集中管理</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>5. 結論</h2>
+
+        <p>Quiz Projectシステムは、基本的な機能実装とデータ整合性の面では良好な状態です。しかし、本番環境へのデプロイを考慮すると、<strong>セキュリティ設定に重大な改善が必要</strong>です。</p>
+
+        <p>特に以下の点を優先的に対応することを推奨します:</p>
+        <ul>
+            <li>SECRET_KEYの適切な管理</li>
+            <li>本番環境用のセキュリティ設定の追加</li>
+            <li>HTTPS/SSL関連設定の実装</li>
+            <li>Pillowライブラリのインストール</li>
+        </ul>
+
+        <footer>
+            <p>監査実施者: Claude Code Assistant</p>
+            <p>次回監査推奨日: 2025-12-17</p>
+        </footer>
+    </div>
+</body>
+</html>

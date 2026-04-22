@@ -1,0 +1,95 @@
+/* 選択肢インライン管理のスタイル */
+.tabular .form-row td.field-is_correct {
+    text-align: center;
+    width: 80px;
+}
+
+.tabular .form-row td.field-text {
+    width: auto;
+}
+
+/* 正解選択肢をハイライト */
+.tabular .form-row.has_original input[name$="-is_correct"]:checked {
+    background-color: #ffeaa7;
+}
+
+.tabular .form-row.has_original.correct-choice {
+    background-color: #d5f4e6;
+}
+
+/* 選択肢追加ボタンのスタイル */
+.add-row {
+    background-color: #417690;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.add-row:hover {
+    background-color: #2e5468;
+}
+
+/* 削除ボタンのスタイル */
+.delete {
+    background-color: #ba2121;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.delete:hover {
+    background-color: #8b1a1a;
+}
+
+/* 質問と選択肢の視覚的分離 */
+.inline-group {
+    margin-bottom: 30px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    background-color: #f9f9f9;
+}
+
+.inline-group h2 {
+    background-color: #417690;
+    color: white;
+    padding: 10px 15px;
+    margin: -15px -15px 15px -15px;
+    border-radius: 5px 5px 0 0;
+}
+
+/* 正解バリデーション */
+.no-correct-answer {
+    border-left: 4px solid #ffc107;
+    padding-left: 10px;
+    background-color: #fff3cd;
+}
+
+.multiple-correct-answers {
+    border-left: 4px solid #dc3545;
+    padding-left: 10px;
+    background-color: #f8d7da;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .tabular .form-row {
+        display: block;
+    }
+    
+    .tabular .form-row td {
+        display: block;
+        width: 100% !important;
+        padding: 5px 0;
+    }
+    
+    .tabular .form-row td.field-is_correct {
+        text-align: left;
+    }
+}

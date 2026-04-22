@@ -1,0 +1,200 @@
+/* 質問インライン管理のスタイル */
+.inline-group {
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.inline-group h2 {
+    background: linear-gradient(135deg, #417690 0%, #2e5468 100%);
+    color: white;
+    padding: 12px 20px;
+    margin: -2px -2px 20px -2px;
+    border-radius: 6px 6px 0 0;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+/* 選択肢セクションのスタイル */
+.collapse {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    padding: 15px;
+    background-color: #ffffff;
+}
+
+.collapse h3 {
+    background-color: #f8f9fa;
+    color: #495057;
+    padding: 8px 12px;
+    margin: -15px -15px 15px -15px;
+    border-radius: 6px 6px 0 0;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* 選択肢フィールドの並び */
+.form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 15px;
+}
+
+.form-row .field {
+    flex: 1;
+}
+
+.form-row .field input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-row .field input[type="checkbox"] {
+    transform: scale(1.2);
+    margin-left: 10px;
+}
+
+/* 正解選択肢のハイライト */
+.correct-choice {
+    background-color: #d4edda !important;
+    border-color: #c3e6cb !important;
+}
+
+.correct-choice input[type="text"] {
+    background-color: #d4edda;
+    border-color: #28a745;
+    font-weight: 500;
+}
+
+/* バリデーションメッセージ */
+.validation-message {
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.validation-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.validation-message.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.validation-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* ラベルスタイル */
+.form-row label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 5px;
+    display: block;
+    font-size: 13px;
+}
+
+/* 必須フィールドの表示 */
+.required label:after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* 折りたたみセクションのトグル */
+.collapse-toggle {
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+}
+
+.collapse-toggle:hover {
+    background-color: #e9ecef;
+}
+
+.collapse-toggle.collapsed::after {
+    content: " [開く]";
+    color: #6c757d;
+    font-size: 12px;
+}
+
+.collapse-toggle:not(.collapsed)::after {
+    content: " [閉じる]";
+    color: #6c757d;
+    font-size: 12px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .form-row .field {
+        width: 100%;
+    }
+    
+    .inline-group {
+        margin-bottom: 20px;
+    }
+    
+    .collapse {
+        padding: 10px;
+    }
+}
+
+/* アニメーション */
+.inline-group {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* フォーカス時のスタイル */
+.form-row .field input[type="text"]:focus {
+    border-color: #417690;
+    box-shadow: 0 0 0 0.2rem rgba(65, 118, 144, 0.25);
+    outline: none;
+}
+
+/* 削除ボタンのスタイル */
+.delete-row {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.delete-row:hover {
+    background-color: #c82333;
+}

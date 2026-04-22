@@ -1,0 +1,127 @@
+<!-- quiz_shortcuts.html - 管理画面に挿入するショートカット -->
+<div class="quiz-shortcuts-widget" style="
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+">
+    <h2 style="color: white; margin-bottom: 15px; font-size: 18px;">🚀 クイズ管理ツール</h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;">
+        <div style="background: rgba(255,255,255,0.1); border-radius: 6px; padding: 12px;">
+            <strong style="display: block; margin-bottom: 8px;">📝 統合フォーム</strong>
+            <a href="/quiz-admin/quiz_api/question/unified-add/" style="
+                background: rgba(255,255,255,0.2);
+                color: white;
+                text-decoration: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                display: inline-block;
+                border: 1px solid rgba(255,255,255,0.3);
+            ">新規作成</a>
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.1); border-radius: 6px; padding: 12px;">
+            <strong style="display: block; margin-bottom: 8px;">📄 統一CSV</strong>
+            <a href="/quiz-admin/quiz_api/category/unified-import/" style="
+                background: rgba(255,255,255,0.2);
+                color: white;
+                text-decoration: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                display: inline-block;
+                border: 1px solid rgba(255,255,255,0.3);
+                margin-right: 5px;
+            ">インポート</a>
+            <a href="/quiz-admin/quiz_api/category/unified-export/" style="
+                background: rgba(255,255,255,0.2);
+                color: white;
+                text-decoration: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                display: inline-block;
+                border: 1px solid rgba(255,255,255,0.3);
+            ">エクスポート</a>
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.1); border-radius: 6px; padding: 12px;">
+            <strong style="display: block; margin-bottom: 8px;">⚡ 一括作成</strong>
+            <a href="/quiz-admin/quiz_api/question/advanced-bulk-add/" style="
+                background: rgba(255,255,255,0.2);
+                color: white;
+                text-decoration: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                display: inline-block;
+                border: 1px solid rgba(255,255,255,0.3);
+                margin-right: 5px;
+            ">高度な作成</a>
+            <a href="/quiz-admin/quiz_api/question/bulk-add/" style="
+                background: rgba(255,255,255,0.2);
+                color: white;
+                text-decoration: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                display: inline-block;
+                border: 1px solid rgba(255,255,255,0.3);
+            ">シンプル作成</a>
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.1); border-radius: 6px; padding: 12px;">
+            <strong style="display: block; margin-bottom: 8px;">🎯 カスタム管理画面</strong>
+            <a href="/quiz-admin/" style="
+                background: rgba(255,255,255,0.2);
+                color: white;
+                text-decoration: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                display: inline-block;
+                border: 1px solid rgba(255,255,255,0.3);
+            ">完全版ダッシュボード</a>
+        </div>
+    </div>
+    
+    <!-- 詳細ナビゲーション -->
+    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+        <h3 style="color: white; margin-bottom: 10px; font-size: 14px;">📋 詳細ツール一覧</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px; font-size: 11px;">
+            <div>
+                <strong style="color: rgba(255,255,255,0.9);">📝 個別作成・編集:</strong><br>
+                <a href="/quiz-admin/quiz_api/question/unified-add/" style="color: rgba(255,255,255,0.8); text-decoration: none;">• 統合フォーム新規作成</a><br>
+                <a href="/quiz-admin/quiz_api/question/" style="color: rgba(255,255,255,0.8); text-decoration: none;">• 質問一覧・編集</a><br>
+                <a href="/quiz-admin/quiz_api/category/" style="color: rgba(255,255,255,0.8); text-decoration: none;">• カテゴリー管理</a>
+            </div>
+            <div>
+                <strong style="color: rgba(255,255,255,0.9);">⚡ 一括操作:</strong><br>
+                <a href="/quiz-admin/quiz_api/question/advanced-bulk-add/" style="color: rgba(255,255,255,0.8); text-decoration: none;">• 高度な一括作成 (JSON/YAML対応)</a><br>
+                <a href="/quiz-admin/quiz_api/question/bulk-add/" style="color: rgba(255,255,255,0.8); text-decoration: none;">• シンプル一括作成</a><br>
+                <a href="/quiz-admin/quiz_api/category/unified-import/" style="color: rgba(255,255,255,0.8); text-decoration: none;">• CSV統一インポート</a>
+            </div>
+            <div>
+                <strong style="color: rgba(255,255,255,0.9);">📊 データ管理:</strong><br>
+                <a href="/quiz-admin/quiz_api/category/unified-export/" style="color: rgba(255,255,255,0.8); text-decoration: none;">• 統一CSV エクスポート</a><br>
+                <a href="/quiz-admin/quiz_api/choice/" style="color: rgba(255,255,255,0.8); text-decoration: none;">• 選択肢管理</a><br>
+                <a href="/quiz-admin/" style="color: rgba(255,255,255,0.8); text-decoration: none;">• 統計ダッシュボード</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 使用ヒント -->
+    <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 4px; font-size: 11px;">
+        <strong style="color: white;">💡 使い分けのヒント:</strong><br>
+        <span style="color: rgba(255,255,255,0.8);">
+        • <strong>1-2問作成</strong> → 統合フォーム | 
+        • <strong>Excel準備済み</strong> → CSV統一インポート | 
+        • <strong>大量データ</strong> → 高度な一括作成 | 
+        • <strong>完全な管理</strong> → <a href="/quiz-admin/" style="color: #ffeb3b; text-decoration: none;">カスタム管理画面</a>
+        </span>
+    </div>
+</div>

@@ -1,0 +1,128 @@
+<!-- stats_widget.html - 統計情報ウィジェット -->
+<div style="
+    background: #fff;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+">
+    <h2 style="color: #333; margin: 0 0 15px 0; font-size: 18px; border-bottom: 2px solid #28a745; padding-bottom: 8px;">
+        📊 システム統計
+    </h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+        <!-- カテゴリー統計 -->
+        <div style="
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        ">
+            <div style="font-size: 28px; font-weight: bold; margin-bottom: 5px;" id="category-count-widget">
+                {{ category_count|default:"0" }}
+            </div>
+            <div style="font-size: 12px; opacity: 0.9;">カテゴリー</div>
+        </div>
+        
+        <!-- 質問統計 -->
+        <div style="
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        ">
+            <div style="font-size: 28px; font-weight: bold; margin-bottom: 5px;" id="question-count-widget">
+                {{ question_count|default:"0" }}
+            </div>
+            <div style="font-size: 12px; opacity: 0.9;">質問</div>
+        </div>
+        
+        <!-- 選択肢統計 -->
+        <div style="
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        ">
+            <div style="font-size: 28px; font-weight: bold; margin-bottom: 5px;" id="choice-count-widget">
+                {{ choice_count|default:"0" }}
+            </div>
+            <div style="font-size: 12px; opacity: 0.9;">選択肢</div>
+        </div>
+        
+        <!-- 受験回数統計 -->
+        <div style="
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        ">
+            <div style="font-size: 28px; font-weight: bold; margin-bottom: 5px;" id="quiz-attempts-widget">
+                {{ quiz_attempts|default:"0" }}
+            </div>
+            <div style="font-size: 12px; opacity: 0.9;">受験回数</div>
+        </div>
+    </div>
+    
+    <!-- 詳細統計 -->
+    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 13px;">
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                <strong style="color: #495057;">📈 平均統計</strong><br>
+                <span style="color: #6c757d;">
+                    質問/カテゴリー: <span id="avg-questions">-</span><br>
+                    選択肢/質問: <span id="avg-choices">-</span>
+                </span>
+            </div>
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                <strong style="color: #495057;">🎯 完成度</strong><br>
+                <span style="color: #6c757d;">
+                    正解設定済み: <span id="questions-with-correct">-</span><br>
+                    選択肢不足: <span id="questions-incomplete">-</span>
+                </span>
+            </div>
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                <strong style="color: #495057;">🕒 最終更新</strong><br>
+                <span style="color: #6c757d;" id="last-updated">
+                    データ読み込み中...
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 統計データの自動更新
+function updateStatsWidget() {
+    // 基本統計の計算
+    const categories = parseInt(document.getElementById('category-count-widget').textContent) || 0;
+    const questions = parseInt(document.getElementById('question-count-widget').textContent) || 0;
+    const choices = parseInt(document.getElementById('choice-count-widget').textContent) || 0;
+    
+    // 平均値の計算
+    const avgQuestions = categories > 0 ? (questions / categories).toFixed(1) : '0';
+    const avgChoices = questions > 0 ? (choices / questions).toFixed(1) : '0';
+    
+    document.getElementById('avg-questions').textContent = avgQuestions;
+    document.getElementById('avg-choices').textContent = avgChoices;
+    
+    // 最終更新時刻
+    const now = new Date();
+    document.getElementById('last-updated').textContent = now.toLocaleString('ja-JP');
+}
+
+// ページ読み込み時とその後定期的に更新
+document.addEventListener('DOMContentLoaded', function() {
+    updateStatsWidget();
+    setInterval(updateStatsWidget, 60000); // 1分ごと
+});
+</script>

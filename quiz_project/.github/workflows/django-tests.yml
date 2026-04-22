@@ -1,0 +1,109 @@
+name: Django CI/CD Tests
+
+# トリガー設定
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+# 環境変数
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+    # リポジトリをチェックアウト
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Pythonのセットアップ
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # 依存関係のキャッシュ
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    # 依存関係のインストール
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt || pip install django djangorestframework django-cors-headers djangorestframework-simplejwt django-import-export django-extensions Pillow
+        pip install coverage
+
+    # Djangoテストの実行
+    - name: Run Django Tests
+      run: |
+        python manage.py test quiz_api --verbosity=2
+
+    # カバレッジ測定
+    - name: Run Tests with Coverage
+      run: |
+        coverage run manage.py test quiz_api
+        coverage report
+        coverage xml
+
+    # カバレッジレポートのアップロード（オプション）
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+      continue-on-error: true
+
+    # Linting (オプション)
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        # E501: 行の長さ制限を無視
+        # W503: 演算子の前での改行を許可
+        flake8 quiz_api --count --select=E9,F63,F7,F82 --show-source --statistics || true
+        flake8 quiz_api --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics || true
+      continue-on-error: true
+
+  # セキュリティチェック (オプション)
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit
+
+    - name: Check for security vulnerabilities
+      run: |
+        # 依存関係の脆弱性チェック
+        safety check --json || true
+      continue-on-error: true
+
+    - name: Run Bandit security linter
+      run: |
+        # Djangoプロジェクトのセキュリティチェック
+        bandit -r quiz_api -ll || true
+      continue-on-error: true

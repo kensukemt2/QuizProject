@@ -17,7 +17,7 @@
     
     <div v-else>
       <!-- カテゴリー選択画面 -->
-      <div class="category-selection" v-if="!currentQuestion">
+      <div class="category-selection" v-if="!currentQuestion && !quizCompleted && !loading">
         <h2>カテゴリを選択してください</h2>
         <div class="sparkle sparkle-1"></div>
         <div class="sparkle sparkle-2"></div>
@@ -51,11 +51,25 @@
             <div class="score-label">スコア</div>
             <div class="score-value">{{ score }}</div>
           </div>
+          
+          <!-- セッション情報表示（開発時のみ） -->
+          <div v-if="sessionInfo && sessionInfo.session_id" class="session-info">
+            <div class="session-label">セッション</div>
+            <div class="session-details">
+              <div class="session-used">使用: {{ sessionInfo.used_count }}</div>
+              <div class="session-remaining">残り: {{ sessionInfo.remaining }}</div>
+            </div>
+          </div>
         </div>
         
         <div class="question-card">
           <div class="question-text">
             <h2>{{ currentQuestion.text }}</h2>
+          </div>
+          
+          <!-- 画像表示 -->
+          <div v-if="currentQuestion.image" class="question-image">
+            <img :src="getImageUrl(currentQuestion.image)" :alt="currentQuestion.text" />
           </div>
           
           <div class="choices">
@@ -169,10 +183,17 @@
           </div>
         </div>
         
-        <button @click="resetQuiz" class="restart-btn">
-          <span class="button-icon">🔄</span>
-          新しいクイズを始める
-        </button>
+        <div class="quiz-actions">
+          <button @click="retakeCurrentQuiz" class="retake-btn">
+            <span class="button-icon">🔁</span>
+            同じクイズを実施する
+          </button>
+          
+          <button @click="resetQuiz" class="restart-btn">
+            <span class="button-icon">🔄</span>
+            新しいクイズを始める
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -207,6 +228,7 @@ export default {
       isGuestMode: false,
       showLoginPrompt: false,
       error: null, // エラーステートの追加
+      sessionInfo: null, // セッション情報
       // カテゴリーの背景色用
       categoryColors: [
         { bg: '#F97316', text: '#FFFFFF' },
@@ -284,6 +306,23 @@ export default {
         console.warn('質問データに問題があります。再設定します。');
         this.questionIndex = 0; // 安全にインデックスをリセット
       }
+    },
+    // ルートの変更を監視してカテゴリー変更に対応
+    '$route'(newRoute, oldRoute) {
+      console.log('Route changed:', newRoute.query);
+      
+      // カテゴリーパラメータが変更された場合
+      const newCategoryId = newRoute.query.category;
+      const oldCategoryId = oldRoute.query.category;
+      
+      if (newCategoryId && newCategoryId !== oldCategoryId) {
+        console.log('Category parameter changed:', newCategoryId);
+        this.startQuizFromCategory(newCategoryId);
+      } else if (!newCategoryId && oldCategoryId) {
+        // カテゴリーパラメータが削除された場合、カテゴリー選択画面に戻る
+        console.log('Category parameter removed, returning to category selection');
+        this.resetQuiz();
+      }
     }
   },
   methods: {
@@ -347,29 +386,23 @@ export default {
         return;
       }
     
+      console.log('Category selected:', categoryId);
+      
+      // ローディング状態を開始
       this.loading = true;
       this.error = null;
       
-      try {
-        // カテゴリ情報を保存
-        const selectedCategory = this.categories.find(c => c.id === categoryId);
-        
-        if (!selectedCategory) {
-          console.error('選択したカテゴリが見つかりません:', categoryId);
-          this.error = 'カテゴリが見つかりません';
-          this.loading = false;
-          return;
+      // URLパラメータを更新（ページ遷移なし）
+      this.$router.replace({
+        path: '/quiz',
+        query: { 
+          category: categoryId,
+          mode: this.isAuthenticated ? 'user' : 'guest'
         }
-        
-        this.selectedCategory = selectedCategory;
-        this.questions = [];  // クリアして古いデータが表示されないようにする
-        
-        await this.fetchQuestions(categoryId);
-      } catch (error) {
-        console.error('質問の取得に失敗しました:', error);
-        this.error = '質問の取得に失敗しました';
-        this.loading = false;
-      }
+      });
+      
+      // 直接クイズを開始
+      await this.startQuizFromCategory(categoryId);
     },
     async fetchQuestions(categoryId) {
       this.loading = true;
@@ -385,23 +418,54 @@ export default {
           throw new Error(`無効なカテゴリID: ${categoryId}`);
         }
         
-        // 正しいURLを構築
-        const url = `http://localhost:8000/api/questions/?category=${categoryIdNum}`;
+        // セッション管理による重複なしランダム問題取得を使用
+        const sessionId = localStorage.getItem('quiz_session_id');
+        let url;
+        
+        if (sessionId) {
+          // 既存セッションを使用して継続取得
+          url = `http://localhost:8000/api/questions/session_questions/?category=${categoryIdNum}&limit=10&session_id=${sessionId}`;
+        } else {
+          // 新しいセッションを開始
+          url = `http://localhost:8000/api/questions/session_questions/?category=${categoryIdNum}&limit=10`;
+        }
+        
         console.log('リクエスト先URL:', url);
+        console.log('使用セッションID:', sessionId || '新規');
         
         const response = await axios.get(url);
         console.log('API応答データ:', response.data);
         
-        // レスポンスがページネーション形式かどうか確認
+        // セッション情報を保存
+        if (response.data.session_id) {
+          localStorage.setItem('quiz_session_id', response.data.session_id);
+          console.log('セッションID保存:', response.data.session_id);
+          
+          // セッション情報をコンポーネントの状態に保存
+          this.sessionInfo = {
+            session_id: response.data.session_id,
+            used_count: response.data.used_count || 0,
+            remaining: response.data.remaining || 0,
+            total_available: response.data.total_available || 0
+          };
+        }
+        
+        // セッション管理APIのレスポンス処理
         let questionsData;
         if (response.data && Array.isArray(response.data.results)) {
-          // ページネーション形式の場合
+          // 新しいセッション管理APIの形式
           questionsData = response.data.results;
-          console.log('ページネーションデータから質問を取得:', questionsData);
+          console.log('セッション管理APIから質問を取得:', questionsData);
+          console.log(`セッション情報: 使用済み${response.data.used_count}問、残り${response.data.remaining}問`);
+          
+          // セッション情報をログに記録
+          if (response.data.message) {
+            console.log('API Message:', response.data.message);
+          }
         } else if (Array.isArray(response.data)) {
-          // 単純な配列の場合
+          // 旧API形式（フォールバック）
           questionsData = response.data;
-          console.log('ページネーションデータから質問を取得:', questionsData);
+          console.log('旧API形式から質問を取得:', questionsData);
         } else {
           console.error('予期しない質問データ形式:', response.data);
           this.error = '質問データの形式が正しくありません';
@@ -432,7 +496,8 @@ export default {
           return question;
         });
         
-        this.questions = this.shuffleArray(validatedQuestions);
+        // セッション管理APIでは既にランダムなので、シャッフルは不要
+        this.questions = validatedQuestions;
         this.questionIndex = 0;
         this.score = 0;
         this.quizCompleted = false; // 'completed'ではなく'quizCompleted'に統一
@@ -492,6 +557,11 @@ export default {
         } else if (this.isGuestMode) {
           this.saveGuestScore();
         }
+        
+        // 結果画面にスクロール
+        this.$nextTick(() => {
+          this.scrollToResults();
+        });
       } else {
         this.questionIndex++;
         this.answered = false;
@@ -509,12 +579,47 @@ export default {
       this.allAnswers = [];
       this.selectedCategory = null;
       this.error = null;
+      this.sessionInfo = null;
+      
+      // セッションIDをクリアして新しいセッションを開始
+      localStorage.removeItem('quiz_session_id');
+      console.log('クイズセッションをリセットしました');
+      
+      // URLパラメータもクリア（カテゴリー選択画面に戻る）
+      if (this.$route.query.category) {
+        this.$router.replace({
+          path: '/quiz',
+          query: { 
+            mode: this.isAuthenticated ? 'user' : 'guest'
+          }
+        });
+      }
       
       // カテゴリデータがない場合は再取得
       if (!this.categories || this.categories.length === 0) {
         this.fetchCategories();
       } else {
         this.loading = false;
+      }
+    },
+    
+    // セッションリセット用の新しいメソッド
+    async resetQuizSession() {
+      const sessionId = localStorage.getItem('quiz_session_id');
+      if (sessionId && this.selectedCategory) {
+        try {
+          // セッションリセットAPIを呼び出し
+          const categoryIdNum = Number(this.selectedCategory.id);
+          const url = `http://localhost:8000/api/questions/session_questions/?category=${categoryIdNum}&limit=10&session_id=${sessionId}&reset=true`;
+          
+          console.log('セッションリセット中...', url);
+          await axios.get(url);
+          console.log('セッションがリセットされました');
+        } catch (error) {
+          console.warn('セッションリセットに失敗:', error);
+          // エラーの場合はローカルストレージをクリア
+          localStorage.removeItem('quiz_session_id');
+        }
       }
     },
     async saveQuizResult() {
@@ -577,6 +682,14 @@ export default {
       if (!category) return 'カテゴリなし';
       return category.name || 'カテゴリなし';
     },
+    getImageUrl(imagePath) {
+      if (!imagePath) return '';
+      // 相対パスの場合はDjangoサーバーのベースURLを追加
+      if (imagePath.startsWith('http')) {
+        return imagePath;
+      }
+      return `http://localhost:8000${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    },
     initQuiz() {
       // コンポーネントの状態を初期化
       this.questions = [];
@@ -587,19 +700,107 @@ export default {
       this.quizCompleted = false;
       this.allAnswers = [];
       this.selectedCategory = null;
+      this.sessionInfo = null;
       
-      // ゲストモード状態の取得
-      this.isGuestMode = this.$store.getters['quiz/isGuestMode'] || 
-                        localStorage.getItem('quizMode') === 'guest' ||
-                        this.$route.query.mode === 'guest';
-                        
-      console.log('クイズ初期化完了:', {
-        isGuestMode: this.isGuestMode,
-        isAuthenticated: this.isAuthenticated
-      });
+      // ゲストモード状態の取得（認証済みの場合はゲストモードを無効にする）
+      if (this.isAuthenticated) {
+        this.isGuestMode = false;
+        // ゲストモード関連のフラグをクリア
+        this.$store.commit('quiz/SET_GUEST_MODE', false);
+        localStorage.removeItem('quizMode');
+      } else {
+        this.isGuestMode = this.$store.getters['quiz/isGuestMode'] || 
+                          localStorage.getItem('quizMode') === 'guest' ||
+                          this.$route.query.mode === 'guest';
+      }
       
-      // カテゴリを取得
-      this.fetchCategories();
+      // URLクエリパラメータからカテゴリーIDを確認
+      const categoryIdFromQuery = this.$route.query.category;
+      
+      if (categoryIdFromQuery) {
+        console.log('URL from category ID detected:', categoryIdFromQuery);
+        // カテゴリーが指定されている場合、直接そのカテゴリーのクイズを開始
+        this.startQuizFromCategory(categoryIdFromQuery);
+      } else {
+        // カテゴリを取得してカテゴリー選択画面を表示
+        this.fetchCategories();
+      }
+    },
+    
+    // URLから直接カテゴリーを指定してクイズを開始
+    async startQuizFromCategory(categoryId) {
+      console.log('Starting quiz for category:', categoryId);
+      
+      try {
+        this.loading = true;
+        this.error = null;
+        
+        // まずカテゴリー情報を取得
+        const categoriesResponse = await axios.get('http://localhost:8000/api/categories/');
+        let categoriesData = [];
+        
+        if (Array.isArray(categoriesResponse.data)) {
+          categoriesData = categoriesResponse.data;
+        } else if (categoriesResponse.data && Array.isArray(categoriesResponse.data.results)) {
+          categoriesData = categoriesResponse.data.results;
+        }
+        
+        // 指定されたカテゴリーを見つける
+        const targetCategory = categoriesData.find(cat => cat.id == categoryId);
+        
+        if (!targetCategory) {
+          console.error('指定されたカテゴリーが見つかりません:', categoryId);
+          this.error = '指定されたカテゴリーが見つかりません';
+          this.loading = false;
+          return;
+        }
+        
+        console.log('Found category:', targetCategory);
+        this.selectedCategory = targetCategory;
+        
+        // そのカテゴリーの問題を取得
+        await this.fetchQuestions(categoryId);
+        
+      } catch (error) {
+        console.error('カテゴリー指定クイズの開始に失敗:', error);
+        this.error = 'クイズの開始に失敗しました';
+        this.loading = false;
+      }
+    },
+    scrollToResults() {
+      // 結果セクションにスムーズにスクロール
+      const resultsElement = document.querySelector('.quiz-results');
+      if (resultsElement) {
+        resultsElement.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    },
+    async retakeCurrentQuiz() {
+      if (!this.selectedCategory) {
+        console.error('選択されたカテゴリーがありません');
+        this.error = 'カテゴリー情報が見つかりません';
+        return;
+      }
+      
+      // クイズセッションをリセット（新しい問題セットを取得するため）
+      await this.resetQuizSession();
+      
+      // 状態をリセット（ただしカテゴリー情報は保持）
+      this.questions = [];
+      this.questionIndex = 0;
+      this.score = 0;
+      this.answered = false;
+      this.selectedChoice = null;
+      this.quizCompleted = false;
+      this.allAnswers = [];
+      this.error = null;
+      this.sessionInfo = null;
+      
+      // 同じカテゴリーで新しいクイズを開始
+      console.log('同じカテゴリーでクイズを再開始:', this.selectedCategory.id);
+      await this.startQuizFromCategory(this.selectedCategory.id);
     }
   },
   created() {
@@ -907,6 +1108,41 @@ export default {
   color: #FACC15;
 }
 
+/* セッション情報表示 */
+.session-info {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: 10px;
+  text-align: center;
+  min-width: 100px;
+  margin-left: 10px;
+}
+
+.session-label {
+  font-size: 10px;
+  opacity: 0.8;
+  margin-bottom: 3px;
+}
+
+.session-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.session-used, .session-remaining {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.session-used {
+  color: #FACC15;
+}
+
+.session-remaining {
+  color: #10B981;
+}
+
 .question-card {
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 15px;
@@ -923,6 +1159,19 @@ export default {
 .question-text h2 {
   font-size: 20px;
   line-height: 1.5;
+}
+
+.question-image {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.question-image img {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  object-fit: contain;
 }
 
 .choices {
@@ -1340,13 +1589,21 @@ export default {
   font-weight: bold;
 }
 
-.restart-btn {
+/* Quiz actions container */
+.quiz-actions {
+  display: flex;
+  gap: 15px;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+
+.retake-btn, .restart-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   padding: 15px;
-  background: linear-gradient(to bottom, #10B981, #059669);
   color: white;
   border: none;
   border-radius: 10px;
@@ -1355,11 +1612,18 @@ export default {
   cursor: pointer;
   transition: all 0.3s;
   position: relative;
-  z-index: 1;
   overflow: hidden;
 }
 
-.restart-btn::before {
+.retake-btn {
+  background: linear-gradient(to bottom, #3B82F6, #2563EB);
+}
+
+.restart-btn {
+  background: linear-gradient(to bottom, #10B981, #059669);
+}
+
+.retake-btn::before, .restart-btn::before {
   content: '';
   position: absolute;
   top: 0;
@@ -1368,6 +1632,12 @@ export default {
   height: 5px;
   background-color: rgba(255, 255, 255, 0.3);
   border-radius: 2.5px 2.5px 0 0;
+}
+
+.retake-btn:hover {
+  background: linear-gradient(to bottom, #2563EB, #1D4ED8);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
 .restart-btn:hover {
@@ -1398,6 +1668,10 @@ export default {
   .answer-number {
     width: 100%;
     height: 30px;
+  }
+  
+  .quiz-actions {
+    gap: 10px;
   }
 }
 

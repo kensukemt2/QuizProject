@@ -1,0 +1,235 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}クイズ管理システム{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">クイズ管理システム</a></h1>
+{% endblock %}
+
+{% block content %}
+<!-- クイックアクション -->
+<div style="
+    background: #fff;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+">
+    <h2 style="color: #333; margin: 0 0 15px 0; font-size: 18px; border-bottom: 2px solid #007cba; padding-bottom: 8px;">
+        ⚡ クイックアクション
+    </h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+        <!-- 統合フォーム -->
+        <a href="/quiz-admin/quiz_api/question/unified-add/" style="
+            display: block;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            transition: transform 0.2s;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 24px; margin-bottom: 5px;">📝</div>
+            <strong style="display: block; margin-bottom: 3px;">統合フォーム</strong>
+            <small style="opacity: 0.9;">質問＋選択肢を同時作成</small>
+        </a>
+        
+        <!-- CSV インポート -->
+        <a href="/quiz-admin/quiz_api/category/unified-import/" style="
+            display: block;
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            transition: transform 0.2s;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 24px; margin-bottom: 5px;">📄</div>
+            <strong style="display: block; margin-bottom: 3px;">CSV インポート</strong>
+            <small style="opacity: 0.9;">統一形式で一括登録</small>
+        </a>
+        
+        <!-- 高度な一括作成 -->
+        <a href="/quiz-admin/quiz_api/question/advanced-bulk-add/" style="
+            display: block;
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            transition: transform 0.2s;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 24px; margin-bottom: 5px;">⚡</div>
+            <strong style="display: block; margin-bottom: 3px;">高度な一括作成</strong>
+            <small style="opacity: 0.9;">JSON/YAML/テキスト対応</small>
+        </a>
+        
+        <!-- カスタム管理画面 -->
+        <a href="/quiz-admin/" style="
+            display: block;
+            background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            transition: transform 0.2s;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 24px; margin-bottom: 5px;">🎯</div>
+            <strong style="display: block; margin-bottom: 3px;">完全ダッシュボード</strong>
+            <small style="opacity: 0.9;">統計＋全機能アクセス</small>
+        </a>
+    </div>
+    
+    <!-- 二次アクション -->
+    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+        <h3 style="color: #666; margin: 0 0 10px 0; font-size: 14px;">🔧 その他のツール</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <a href="/quiz-admin/quiz_api/question/bulk-add/" style="
+                background: #f8f9fa;
+                color: #495057;
+                text-decoration: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                border: 1px solid #dee2e6;
+                transition: background-color 0.2s;
+            " onmouseover="this.style.backgroundColor='#e9ecef'" onmouseout="this.style.backgroundColor='#f8f9fa'">
+                📚 シンプル一括作成
+            </a>
+            <a href="/quiz-admin/quiz_api/category/unified-export/" style="
+                background: #f8f9fa;
+                color: #495057;
+                text-decoration: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                border: 1px solid #dee2e6;
+                transition: background-color 0.2s;
+            " onmouseover="this.style.backgroundColor='#e9ecef'" onmouseout="this.style.backgroundColor='#f8f9fa'">
+                💾 CSV エクスポート
+            </a>
+            <a href="/quiz-admin/quiz_api/question/" style="
+                background: #f8f9fa;
+                color: #495057;
+                text-decoration: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                border: 1px solid #dee2e6;
+                transition: background-color 0.2s;
+            " onmouseover="this.style.backgroundColor='#e9ecef'" onmouseout="this.style.backgroundColor='#f8f9fa'">
+                📋 質問一覧
+            </a>
+            <a href="/quiz-admin/quiz_api/category/" style="
+                background: #f8f9fa;
+                color: #495057;
+                text-decoration: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                border: 1px solid #dee2e6;
+                transition: background-color 0.2s;
+            " onmouseover="this.style.backgroundColor='#e9ecef'" onmouseout="this.style.backgroundColor='#f8f9fa'">
+                📁 カテゴリー管理
+            </a>
+        </div>
+    </div>
+    
+    <!-- 統計表示 -->
+    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;">
+        <h3 style="color: #666; margin: 0 0 10px 0; font-size: 14px;">📊 システム統計</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;">
+            <div style="background: #e3f2fd; padding: 10px; border-radius: 4px; text-align: center;">
+                <div style="font-size: 20px; font-weight: bold; color: #1976d2;">{{ category_count|default:"0" }}</div>
+                <div style="font-size: 11px; color: #666;">カテゴリー</div>
+            </div>
+            <div style="background: #f3e5f5; padding: 10px; border-radius: 4px; text-align: center;">
+                <div style="font-size: 20px; font-weight: bold; color: #7b1fa2;">{{ question_count|default:"0" }}</div>
+                <div style="font-size: 11px; color: #666;">質問</div>
+            </div>
+            <div style="background: #fff3e0; padding: 10px; border-radius: 4px; text-align: center;">
+                <div style="font-size: 20px; font-weight: bold; color: #f57c00;">{{ choice_count|default:"0" }}</div>
+                <div style="font-size: 11px; color: #666;">選択肢</div>
+            </div>
+            <div style="background: #e8f5e8; padding: 10px; border-radius: 4px; text-align: center;">
+                <div style="font-size: 20px; font-weight: bold; color: #388e3c;">{{ quiz_attempts|default:"0" }}</div>
+                <div style="font-size: 11px; color: #666;">受験回数</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 使用ガイド -->
+    <div style="
+        margin-top: 15px;
+        padding: 12px;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-radius: 6px;
+        border-left: 4px solid #2196F3;
+    ">
+        <strong style="color: #1565C0; display: block; margin-bottom: 5px;">💡 効率的な使い方</strong>
+        <div style="color: #1976D2; font-size: 12px; line-height: 1.4;">
+            <strong>少数問題:</strong> 統合フォーム → 
+            <strong>Excel準備済み:</strong> CSV インポート → 
+            <strong>大量問題:</strong> 高度な一括作成 → 
+            <strong>総合管理:</strong> 完全ダッシュボード
+        </div>
+    </div>
+</div>
+
+<!-- Django admin の標準コンテンツ -->
+<div id="content-main">
+    {% if app_list %}
+        {% for app in app_list %}
+            <div class="app-{{ app.app_label }} module">
+                <table>
+                    <caption>
+                        <a href="{{ app.app_url }}" class="section" title="{% blocktrans with name=app.name %}Models in the {{ name }} application{% endblocktrans %}">{{ app.name }}</a>
+                    </caption>
+                    {% for model in app.models %}
+                        <tr class="model-{{ model.object_name|lower }}">
+                            {% if model.admin_url %}
+                                <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+                            {% else %}
+                                <th scope="row">{{ model.name }}</th>
+                            {% endif %}
+
+                            {% if model.add_url %}
+                                <td><a href="{{ model.add_url }}" class="addlink">{% trans 'Add' %}</a></td>
+                            {% else %}
+                                <td>&nbsp;</td>
+                            {% endif %}
+
+                            {% if model.admin_url %}
+                                {% if model.view_only %}
+                                    <td><a href="{{ model.admin_url }}" class="viewlink">{% trans 'View' %}</a></td>
+                                {% else %}
+                                    <td><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
+                                {% endif %}
+                            {% else %}
+                                <td>&nbsp;</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>{% trans "You don't have permission to view or edit anything." %}</p>
+    {% endif %}
+</div>
+{% endblock %}

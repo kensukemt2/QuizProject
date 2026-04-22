@@ -1,0 +1,319 @@
+<!-- templates/admin/quiz_api/question/advanced_bulk_add.html -->
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrahead %}
+<style>
+.format-help {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+.format-example {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 10px;
+    margin: 10px 0;
+    font-family: monospace;
+    white-space: pre-wrap;
+}
+
+.format-tabs {
+    margin: 20px 0;
+}
+
+.format-tab {
+    display: none;
+}
+
+.format-tab.active {
+    display: block;
+}
+
+.tab-buttons {
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 8px 16px;
+    margin-right: 5px;
+    cursor: pointer;
+    border-radius: 4px 4px 0 0;
+}
+
+.tab-button.active {
+    background-color: #007bff;
+    color: white;
+    border-bottom-color: #007bff;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<div class="module">
+    <h2>概要</h2>
+    <p>複数の形式で質問を一括作成できます。入力形式を選択し、対応する形式でデータを入力してください。</p>
+</div>
+
+<form method="post" class="module">
+    {% csrf_token %}
+    
+    <fieldset class="module aligned">
+        <div class="form-row">
+            {{ form.category.label_tag }}
+            {{ form.category }}
+            {% if form.category.help_text %}
+                <p class="help">{{ form.category.help_text }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="form-row">
+            {{ form.format_type.label_tag }}
+            {{ form.format_type }}
+        </div>
+    </fieldset>
+    
+    <div class="format-tabs">
+        <div class="tab-buttons">
+            <button type="button" class="tab-button active" data-tab="simple">シンプル形式</button>
+            <button type="button" class="tab-button" data-tab="json">JSON形式</button>
+            <button type="button" class="tab-button" data-tab="yaml">YAML形式</button>
+        </div>
+        
+        <div id="simple-tab" class="format-tab active">
+            <div class="format-help">
+                <h3>シンプル形式</h3>
+                <p>最もシンプルな形式です。質問文の後に選択肢を並べ、正解には*を付けます。</p>
+                <div class="format-example">質問文
+選択肢1
+選択肢2*
+選択肢3
+
+次の質問文
+選択肢A
+選択肢B*</div>
+            </div>
+        </div>
+        
+        <div id="json-tab" class="format-tab">
+            <div class="format-help">
+                <h3>JSON形式</h3>
+                <p>構造化されたデータ形式。プログラムで生成したデータに適しています。</p>
+                <div class="format-example">[
+  {
+    "question": "2+2は？",
+    "choices": [
+      {"text": "2", "correct": false},
+      {"text": "3", "correct": false},
+      {"text": "4", "correct": true},
+      {"text": "5", "correct": false}
+    ]
+  },
+  {
+    "question": "日本の首都は？",
+    "choices": [
+      {"text": "大阪", "correct": false},
+      {"text": "東京", "correct": true},
+      {"text": "京都", "correct": false}
+    ]
+  }
+]</div>
+            </div>
+        </div>
+        
+        <div id="yaml-tab" class="format-tab">
+            <div class="format-help">
+                <h3>YAML形式</h3>
+                <p>人間が読みやすい構造化形式。インデントで構造を表現します。</p>
+                <div class="format-example">- question: "2+2は？"
+  choices:
+    - text: "2"
+      correct: false
+    - text: "3"
+      correct: false
+    - text: "4"
+      correct: true
+    - text: "5"
+      correct: false
+
+- question: "日本の首都は？"
+  choices:
+    - text: "大阪"
+      correct: false
+    - text: "東京"
+      correct: true
+    - text: "京都"
+      correct: false</div>
+            </div>
+        </div>
+    </div>
+    
+    <fieldset class="module aligned">
+        <div class="form-row">
+            {{ form.questions_data.label_tag }}
+            {{ form.questions_data }}
+            {% if form.questions_data.errors %}
+                <ul class="errorlist">
+                    {% for error in form.questions_data.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </fieldset>
+    
+    <div class="submit-row">
+        <input type="submit" value="問題を一括作成" class="default" name="_save">
+        <a href="../" class="button cancel-link">キャンセル</a>
+    </div>
+</form>
+
+<div class="module">
+    <h2>注意事項</h2>
+    <ul>
+        <li>各質問には最低2つ、最大6つの選択肢が必要です</li>
+        <li>正解は必ず1つだけ指定してください</li>
+        <li>大量のデータを処理する場合は時間がかかることがあります</li>
+        <li>エラーがある行はスキップされ、正常な行のみ処理されます</li>
+    </ul>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // タブ切り替え機能
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const formatTabs = document.querySelectorAll('.format-tab');
+    const formatRadios = document.querySelectorAll('input[name="format_type"]');
+    
+    function switchTab(tabId) {
+        // タブボタンの状態更新
+        tabButtons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.tab === tabId) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // タブコンテンツの表示/非表示
+        formatTabs.forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.id === tabId + '-tab') {
+                tab.classList.add('active');
+            }
+        });
+        
+        // ラジオボタンの選択
+        formatRadios.forEach(radio => {
+            if (radio.value === tabId) {
+                radio.checked = true;
+            }
+        });
+    }
+    
+    // タブボタンのクリックイベント
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            switchTab(this.dataset.tab);
+        });
+    });
+    
+    // ラジオボタンの変更イベント
+    formatRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                switchTab(this.value);
+            }
+        });
+    });
+    
+    // サンプルデータの挿入機能
+    const exampleData = {
+        simple: `2+2は？
+2
+3
+4*
+5
+
+3×3は？
+6
+9*
+12
+15
+
+日本の首都は？
+大阪
+東京*
+京都
+名古屋`,
+        
+        json: `[
+  {
+    "question": "2+2は？",
+    "choices": [
+      {"text": "2", "correct": false},
+      {"text": "3", "correct": false},
+      {"text": "4", "correct": true},
+      {"text": "5", "correct": false}
+    ]
+  },
+  {
+    "question": "3×3は？",
+    "choices": [
+      {"text": "6", "correct": false},
+      {"text": "9", "correct": true},
+      {"text": "12", "correct": false},
+      {"text": "15", "correct": false}
+    ]
+  }
+]`,
+        
+        yaml: `- question: "2+2は？"
+  choices:
+    - text: "2"
+      correct: false
+    - text: "3"
+      correct: false
+    - text: "4"
+      correct: true
+    - text: "5"
+      correct: false
+
+- question: "3×3は？"
+  choices:
+    - text: "6"
+      correct: false
+    - text: "9"
+      correct: true
+    - text: "12"
+      correct: false
+    - text: "15"
+      correct: false`
+    };
+    
+    // サンプル挿入ボタンを追加
+    const textarea = document.querySelector('textarea[name="questions_data"]');
+    if (textarea) {
+        const insertSampleBtn = document.createElement('button');
+        insertSampleBtn.type = 'button';
+        insertSampleBtn.textContent = 'サンプルデータを挿入';
+        insertSampleBtn.className = 'button';
+        insertSampleBtn.style.marginLeft = '10px';
+        
+        insertSampleBtn.addEventListener('click', function() {
+            const activeFormat = document.querySelector('input[name="format_type"]:checked').value;
+            textarea.value = exampleData[activeFormat];
+        });
+        
+        textarea.parentNode.appendChild(insertSampleBtn);
+    }
+});
+</script>
+{% endblock %}

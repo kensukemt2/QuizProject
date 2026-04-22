@@ -30,6 +30,10 @@ const actions = {
       localStorage.setItem('token', token);
       commit('SET_TOKEN', token);
       
+      // ログイン成功時にゲストモードをクリア
+      commit('quiz/SET_GUEST_MODE', false, { root: true });
+      localStorage.removeItem('quizMode');
+      
       // ユーザー情報を取得（オプション）
       await dispatch('fetchUserProfile');
       
@@ -42,33 +46,23 @@ const actions = {
   
   // 登録
   async register(_, userData) {
-    try {
-      console.log('APIリクエストを送信します:', userData);
-      
-      const API_URL = 'http://localhost:8000';
-      
-      const response = await fetch(`${API_URL}/api/register/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData)
-      });
-      
-      console.log('APIレスポンス:', response);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('サーバーエラー:', errorData);
-        // エラーオブジェクトにデータを含めて投げる
-        throw { response: { data: errorData, message: 'ユーザー登録に失敗しました' } };
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('登録エラー:', error);
-      throw error; // エラーを上位に伝播させる
+    const API_URL = 'http://localhost:8000';
+    
+    const response = await fetch(`${API_URL}/api/register/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      // エラーオブジェクトにデータを含めて投げる
+      throw { response: { data: errorData, message: 'ユーザー登録に失敗しました' } };
     }
+    
+    return true;
   },
   
   // ログアウト
@@ -108,12 +102,9 @@ const actions = {
     try {
       // トークンがない場合は処理しない
       if (!state.token) {
-        console.warn('認証トークンがないため、ユーザー情報を取得できません');
         return false;
       }
 
-      console.log('ユーザープロフィールを取得します');
-      console.log('使用するトークン:', state.token.substring(0, 10) + '...');
 
       // 認証形式をJWTに合わせる
       const response = await fetch('http://localhost:8000/api/profile/', {
@@ -126,12 +117,10 @@ const actions = {
 
       // レスポンスの検証
       if (!response.ok) {
-        console.error(`ユーザープロフィール取得エラー: HTTP ${response.status}`);
         
         // エラーレスポンスの詳細を取得
         try {
-          const errorData = await response.json();
-          console.error('エラーの詳細:', errorData);
+          await response.json();
         } catch (e) {
           // JSONデータがない場合は無視
         }
@@ -141,10 +130,8 @@ const actions = {
 
       const userData = await response.json();
       commit('SET_USER', userData);
-      console.log('ユーザープロフィール取得成功:', userData);
       return true;
     } catch (error) {
-      console.error('ユーザープロフィール取得エラー:', error);
       return false;
     }
   }

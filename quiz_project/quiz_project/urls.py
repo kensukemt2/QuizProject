@@ -17,9 +17,24 @@ Including another URLconf
 # quiz_project/urls.py
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter, SimpleRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from quiz_api.views import CategoryViewSet, QuestionViewSet, SaveQuizResultView, QuizHistoryView, QuizAttemptDetailView, LeaderboardView, UserStatsView, RegisterView, UserProfileView, PublicLeaderboardView
+from quiz_api.views import (
+    CategoryViewSet, QuestionViewSet, SaveQuizResultView, QuizHistoryView,
+    QuizAttemptDetailView, LeaderboardView, UserStatsView, RegisterView,
+    UserProfileView, PublicLeaderboardView, AuthRateThrottle,
+)
+from quiz_api.admin import quiz_admin_site
+
+
+class ThrottledTokenObtainPairView(TokenObtainPairView):
+    throttle_classes = [AuthRateThrottle]
+
+
+class ThrottledTokenRefreshView(TokenRefreshView):
+    throttle_classes = [AuthRateThrottle]
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
@@ -27,11 +42,12 @@ router.register(r'questions', QuestionViewSet, basename='question')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('quiz-admin/', quiz_admin_site.urls),  # カスタム管理画面
     path('api/', include(router.urls)),
     # 既存のURLパターン
     path('api/register/', RegisterView.as_view(), name='register'),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/', ThrottledTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', ThrottledTokenRefreshView.as_view(), name='token_refresh'),
     path('api/profile/', UserProfileView.as_view(), name='user_profile'),
     
 ]
@@ -43,11 +59,14 @@ urlpatterns += [
 ]
 # リーダーボード
 urlpatterns += [
-    path('api/quiz/leaderboard/', LeaderboardView.as_view(), name='leaderboard'),  # この行を追加
+    path('api/quiz/leaderboard/', PublicLeaderboardView.as_view(), name='public-leaderboard'),  # 公開リーダーボード（認証不要）
+    path('api/quiz/leaderboard/authenticated/', LeaderboardView.as_view(), name='leaderboard'),  # 認証必要
 ]
 #ユーザープロフィールとパフォーマンス統計
 urlpatterns += [
     path('api/user/stats/', UserStatsView.as_view(), name='user_stats'),
-    # 公開リーダーボード用のURLを追加
-    path('api/public/leaderboard/', PublicLeaderboardView.as_view(), name='public-leaderboard'),
 ]
+
+# Media files serving during development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

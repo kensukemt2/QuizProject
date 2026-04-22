@@ -12,14 +12,14 @@
         </div>
         
         <!-- 成功メッセージ -->
-        <div v-if="registrationSuccess" class="success-message">
-          <div class="message-icon">✓</div>
+        <div v-if="registrationSuccess" class="success-message" role="status">
+          <div class="message-icon" aria-hidden="true">✓</div>
           <p>{{ registrationSuccess }}</p>
         </div>
-        
+
         <!-- エラーメッセージ -->
-        <div v-if="error" class="error-message">
-          <div class="message-icon">!</div>
+        <div v-if="error" class="error-message" role="alert">
+          <div class="message-icon" aria-hidden="true">!</div>
           <p>{{ error }}</p>
         </div>
         
@@ -27,13 +27,15 @@
           <div class="form-group">
             <label for="username">ユーザー名</label>
             <div class="input-wrapper">
-              <input 
-                type="text" 
-                id="username" 
-                v-model="credentials.username" 
-                required 
+              <input
+                type="text"
+                id="username"
+                v-model="credentials.username"
+                required
                 class="form-control"
                 placeholder="ユーザー名を入力"
+                autocomplete="username"
+                :aria-invalid="error ? 'true' : undefined"
               />
               <div class="input-icon user-icon"></div>
             </div>
@@ -42,13 +44,15 @@
           <div class="form-group">
             <label for="password">パスワード</label>
             <div class="input-wrapper">
-              <input 
-                type="password" 
-                id="password" 
-                v-model="credentials.password" 
+              <input
+                type="password"
+                id="password"
+                v-model="credentials.password"
                 required
                 class="form-control"
-                placeholder="パスワードを入力" 
+                placeholder="パスワードを入力"
+                autocomplete="current-password"
+                :aria-invalid="error ? 'true' : undefined"
               />
               <div class="input-icon password-icon"></div>
             </div>

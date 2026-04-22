@@ -1,6 +1,6 @@
 <!-- src/components/Navbar.vue -->
 <template>
-  <nav class="navbar">
+  <nav class="navbar" aria-label="メインナビゲーション">
     <div class="grid-lines"></div>
     <div class="glow-effect"></div>
     
@@ -26,6 +26,18 @@
           <div class="nav-btn">プロフィール</div>
         </router-link>
         
+        <div class="dropdown" @mouseover="showDropdown = true" @mouseleave="showDropdown = false" @keydown.escape="showDropdown = false">
+          <button type="button" class="nav-btn dropdown-trigger" aria-haspopup="true" :aria-expanded="showDropdown.toString()" @click="showDropdown = !showDropdown" @keydown.enter.prevent="showDropdown = !showDropdown" @keydown.space.prevent="showDropdown = !showDropdown">
+            情報
+            <span class="dropdown-arrow" aria-hidden="true">▼</span>
+          </button>
+          <div class="dropdown-menu" :class="{ 'show': showDropdown }" role="menu">
+            <router-link to="/about" class="dropdown-item" role="menuitem">運営者情報</router-link>
+            <router-link to="/contact" class="dropdown-item" role="menuitem">お問い合わせ</router-link>
+            <router-link to="/privacy" class="dropdown-item" role="menuitem">プライバシーポリシー</router-link>
+          </div>
+        </div>
+        
         <div class="user-profile" v-if="currentUser">
           <div class="user-avatar">
             {{ currentUser.username ? currentUser.username.charAt(0).toUpperCase() : 'U' }}
@@ -39,6 +51,17 @@
         </button>
       </template>
       <template v-else>
+        <div class="dropdown" @mouseover="showGuestDropdown = true" @mouseleave="showGuestDropdown = false" @keydown.escape="showGuestDropdown = false">
+          <button type="button" class="nav-btn dropdown-trigger" aria-haspopup="true" :aria-expanded="showGuestDropdown.toString()" @click="showGuestDropdown = !showGuestDropdown" @keydown.enter.prevent="showGuestDropdown = !showGuestDropdown" @keydown.space.prevent="showGuestDropdown = !showGuestDropdown">
+            情報
+            <span class="dropdown-arrow" aria-hidden="true">▼</span>
+          </button>
+          <div class="dropdown-menu" :class="{ 'show': showGuestDropdown }" role="menu">
+            <router-link to="/about" class="dropdown-item" role="menuitem">運営者情報</router-link>
+            <router-link to="/contact" class="dropdown-item" role="menuitem">お問い合わせ</router-link>
+            <router-link to="/privacy" class="dropdown-item" role="menuitem">プライバシーポリシー</router-link>
+          </div>
+        </div>
         <router-link to="/login" class="auth-btn login">ログイン</router-link>
         <router-link to="/register" class="auth-btn register">登録</router-link>
       </template>
@@ -51,6 +74,12 @@ import { mapGetters, mapActions } from 'vuex';
 
 export default {
   name: 'SiteNavigation',
+  data() {
+    return {
+      showDropdown: false,
+      showGuestDropdown: false
+    }
+  },
   computed: {
     ...mapGetters('auth', ['isAuthenticated', 'currentUser'])
   },
@@ -73,8 +102,10 @@ export default {
   height: 70px;
   background-color: #2563EB;
   color: white;
-  position: relative;
-  overflow: hidden;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  overflow: visible;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
@@ -91,7 +122,7 @@ export default {
     linear-gradient(90deg, transparent 59%, rgba(147, 197, 253, 0.1) 60%, transparent 61%),
     linear-gradient(90deg, transparent 79%, rgba(147, 197, 253, 0.1) 80%, transparent 81%);
   background-size: 20% 100%;
-  z-index: 1;
+  z-index: 0;
   pointer-events: none;
 }
 
@@ -104,7 +135,7 @@ export default {
   width: 300px;
   height: 200px;
   background: radial-gradient(circle, rgba(147, 197, 253, 0.4) 0%, rgba(30, 64, 175, 0) 70%);
-  z-index: 1;
+  z-index: 0;
   pointer-events: none;
 }
 
@@ -117,7 +148,7 @@ export default {
   width: 100%;
   height: 2px;
   background-color: #F97316;
-  z-index: 2;
+  z-index: 1;
 }
 
 /* ロゴ部分 */
@@ -125,7 +156,7 @@ export default {
   display: flex;
   align-items: center;
   position: relative;
-  z-index: 2;
+  z-index: 10;
 }
 
 .logo-box {
@@ -158,7 +189,7 @@ export default {
   align-items: center;
   gap: 10px;
   position: relative;
-  z-index: 2;
+  z-index: 10;
 }
 
 .nav-link {
@@ -261,6 +292,83 @@ export default {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* ドロップダウンメニュー */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  z-index: 20;
+}
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.dropdown-arrow {
+  margin-left: 5px;
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.dropdown:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 180px;
+  background-color: #1E40AF;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 9999;
+  border: 1px solid rgba(147, 197, 253, 0.2);
+  margin-top: 0;
+}
+
+.dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: block;
+  padding: 12px 16px;
+  color: #93C5FD;
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(147, 197, 253, 0.1);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background-color: #3B82F6;
+  color: white;
+  padding-left: 20px;
+}
+
+.dropdown-item:first-child {
+  border-radius: 10px 10px 0 0;
+}
+
+.dropdown-item:last-child {
+  border-radius: 0 0 10px 10px;
+}
+
 /* レスポンシブデザイン */
 @media (max-width: 768px) {
   .navbar {
@@ -284,6 +392,24 @@ export default {
   
   .logout-btn {
     margin: 10px 0;
+  }
+  
+  .dropdown-menu {
+    position: static;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    box-shadow: none;
+    border: none;
+    background-color: transparent;
+    margin-top: 10px;
+  }
+  
+  .dropdown-item {
+    background-color: #1E40AF;
+    margin-bottom: 5px;
+    border-radius: 10px;
+    border: none;
   }
 }
 </style>

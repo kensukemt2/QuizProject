@@ -12,13 +12,13 @@
           <div class="circle circle-2"></div>
         </div>
         
-        <div v-if="error" class="error-message">
-          <div class="message-icon">!</div>
+        <div v-if="error" class="error-message" role="alert">
+          <div class="message-icon" aria-hidden="true">!</div>
           <p>{{ error }}</p>
         </div>
-        
-        <div v-if="successMessage" class="success-message">
-          <div class="message-icon">✓</div>
+
+        <div v-if="successMessage" class="success-message" role="status">
+          <div class="message-icon" aria-hidden="true">✓</div>
           <p>{{ successMessage }}</p>
         </div>
         
@@ -26,13 +26,14 @@
           <div class="form-group">
             <label for="username">ユーザー名</label>
             <div class="input-wrapper">
-              <input 
-                type="text" 
-                id="username" 
-                v-model="userData.username" 
-                required 
+              <input
+                type="text"
+                id="username"
+                v-model="userData.username"
+                required
                 class="form-control"
                 placeholder="ユーザー名を入力"
+                autocomplete="username"
               />
               <div class="input-icon user-icon"></div>
             </div>
@@ -41,13 +42,14 @@
           <div class="form-group">
             <label for="email">メールアドレス</label>
             <div class="input-wrapper">
-              <input 
-                type="email" 
-                id="email" 
-                v-model="userData.email" 
+              <input
+                type="email"
+                id="email"
+                v-model="userData.email"
                 required
                 class="form-control"
                 placeholder="メールアドレスを入力"
+                autocomplete="email"
               />
               <div class="input-icon email-icon"></div>
             </div>
@@ -56,18 +58,20 @@
           <div class="form-group">
             <label for="password">パスワード</label>
             <div class="input-wrapper">
-              <input 
-                type="password" 
-                id="password" 
-                v-model="userData.password" 
+              <input
+                type="password"
+                id="password"
+                v-model="userData.password"
                 required
                 minlength="8"
                 class="form-control"
                 placeholder="パスワードを入力"
+                autocomplete="new-password"
+                aria-describedby="password-requirements"
               />
               <div class="input-icon password-icon"></div>
             </div>
-            <div class="password-hint">
+            <div class="password-hint" id="password-requirements">
               <h4>パスワードの条件:</h4>
               <ul>
                 <li>8文字以上であること</li>
@@ -81,14 +85,15 @@
           <div class="form-group">
             <label for="password2">パスワード（確認）</label>
             <div class="input-wrapper">
-              <input 
-                type="password" 
-                id="password2" 
-                v-model="userData.password2" 
+              <input
+                type="password"
+                id="password2"
+                v-model="userData.password2"
                 required
                 minlength="8"
                 class="form-control"
                 placeholder="パスワードを再入力"
+                autocomplete="new-password"
               />
               <div class="input-icon password-confirm-icon"></div>
             </div>
@@ -141,7 +146,6 @@ export default {
       this.error = null;
       
       try {
-        console.log('登録処理を開始します', this.userData);
         const success = await this.register(this.userData);
         
         if (success) {
@@ -163,7 +167,6 @@ export default {
         }
       } catch (err) {
         this.successMessage = null;
-        console.error('登録エラーの詳細:', err);
         
         if (err.response && err.response.data) {
           const errorData = err.response.data;

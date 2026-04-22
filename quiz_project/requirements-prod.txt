@@ -1,0 +1,14 @@
+# 本番環境用の依存関係
+Django==5.2.3
+djangorestframework==3.16.0
+djangorestframework-simplejwt==5.5.0
+django-cors-headers==4.7.0
+django-import-export==4.3.7
+django-extensions==4.1
+Pillow==11.2.1
+PyJWT==2.9.0
+
+# 本番環境用の追加パッケージ
+gunicorn>=20.1.0
+psycopg2-binary>=2.9.0  # PostgreSQL用
+whitenoise>=6.0.0  # 静的ファイル配信

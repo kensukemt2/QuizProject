@@ -1,0 +1,365 @@
+{
+  "audit_metadata": {
+    "audit_date": "2025-11-17 00:02:39",
+    "system_name": "Quiz Project (クイズ管理システム)",
+    "audit_version": "1.0",
+    "auditor": "Claude Code Assistant"
+  },
+  "executive_summary": {
+    "overall_rating": "要改善",
+    "issue_count": {
+      "critical": 1,
+      "high": 6,
+      "medium": 2,
+      "low": 1
+    }
+  },
+  "security_audit": {
+    "critical_issues": [
+      {
+        "id": "SEC-001",
+        "title": "SECRET_KEYの脆弱性",
+        "severity": "critical",
+        "description": "SECRET_KEYが'django-insecure-'で始まっており、開発用の自動生成キーが使用されている",
+        "impact": "セキュリティ機能が攻撃に対して脆弱",
+        "current_value": "django-insecure-@izyc4hsq1%bo*unsxtnlkkvb7#a%@sixic@wc0yrvjp(gzown",
+        "recommendation": "50文字以上のランダムな文字列を生成し、環境変数で管理",
+        "remediation_effort": "低",
+        "file_location": "quiz_project/settings.py:24"
+      }
+    ],
+    "high_issues": [
+      {
+        "id": "SEC-002",
+        "title": "DEBUG設定が本番環境で有効化される可能性",
+        "severity": "high",
+        "description": "DEBUG設定のデフォルト値がTrueになっている",
+        "impact": "本番環境でDEBUGがTrueの場合、内部情報が漏洩する",
+        "recommendation": "デフォルト値を'False'に変更",
+        "remediation_effort": "低",
+        "file_location": "quiz_project/settings.py:27"
+      },
+      {
+        "id": "SEC-003",
+        "title": "ALLOWED_HOSTSが空の可能性",
+        "severity": "high",
+        "description": "環境変数が設定されていない場合、ALLOWED_HOSTSが空リストになる",
+        "impact": "Host Headerインジェクション攻撃のリスク",
+        "recommendation": "本番環境用のデフォルト値を設定",
+        "remediation_effort": "低",
+        "file_location": "quiz_project/settings.py:29"
+      },
+      {
+        "id": "SEC-004",
+        "title": "SECURE_HSTS_SECONDSが未設定",
+        "severity": "high",
+        "description": "HTTP Strict Transport Securityが設定されていない",
+        "impact": "中間者攻撃のリスク",
+        "recommendation": "本番環境でSECURE_HSTS_SECONDS = 31536000を設定",
+        "remediation_effort": "低",
+        "file_location": "quiz_project/settings.py"
+      },
+      {
+        "id": "SEC-005",
+        "title": "SECURE_SSL_REDIRECTが未設定",
+        "severity": "high",
+        "description": "HTTPからHTTPSへの自動リダイレクトが設定されていない",
+        "impact": "非暗号化通信のリスク",
+        "recommendation": "本番環境でSECURE_SSL_REDIRECT = Trueを設定",
+        "remediation_effort": "低",
+        "file_location": "quiz_project/settings.py"
+      },
+      {
+        "id": "SEC-006",
+        "title": "SESSION_COOKIE_SECUREが未設定",
+        "severity": "high",
+        "description": "セッションCookieがHTTPSのみに制限されていない",
+        "impact": "セッションハイジャックのリスク",
+        "recommendation": "本番環境でSESSION_COOKIE_SECURE = Trueを設定",
+        "remediation_effort": "低",
+        "file_location": "quiz_project/settings.py"
+      },
+      {
+        "id": "SEC-007",
+        "title": "CSRF_COOKIE_SECUREが未設定",
+        "severity": "high",
+        "description": "CSRF CookieがHTTPSのみに制限されていない",
+        "impact": "CSRF攻撃のリスク増加",
+        "recommendation": "本番環境でCSRF_COOKIE_SECURE = Trueを設定",
+        "remediation_effort": "低",
+        "file_location": "quiz_project/settings.py"
+      }
+    ],
+    "medium_issues": [
+      {
+        "id": "SEC-008",
+        "title": "JWT トークンの有効期限",
+        "severity": "medium",
+        "description": "ACCESS_TOKEN: 1日, REFRESH_TOKEN: 7日",
+        "impact": "セキュリティ要件に応じた調整が必要な可能性",
+        "recommendation": "セキュリティ要件に応じて調整を検討",
+        "remediation_effort": "低",
+        "file_location": "quiz_project/settings.py:151-154"
+      }
+    ],
+    "good_points": [
+      {
+        "title": "パスワード検証",
+        "description": "Django標準の4つのバリデーターが適切に設定されている",
+        "details": [
+          "UserAttributeSimilarityValidator",
+          "MinimumLengthValidator",
+          "CommonPasswordValidator",
+          "NumericPasswordValidator"
+        ]
+      },
+      {
+        "title": "CSRF保護",
+        "description": "CsrfViewMiddlewareが有効化されている"
+      },
+      {
+        "title": "Clickjacking保護",
+        "description": "XFrameOptionsMiddlewareが有効化されている"
+      }
+    ]
+  },
+  "database_integrity": {
+    "statistics": {
+      "categories": 8,
+      "questions": 332,
+      "choices": 1324,
+      "users": 7,
+      "quiz_attempts": 23
+    },
+    "integrity_checks": {
+      "questions_without_correct_answer": {
+        "count": 0,
+        "status": "good",
+        "details": []
+      },
+      "questions_insufficient_choices": {
+        "count": 0,
+        "status": "good",
+        "details": []
+      },
+      "questions_multiple_correct": {
+        "count": 0,
+        "status": "good",
+        "details": []
+      },
+      "empty_categories": {
+        "count": 0,
+        "status": "good",
+        "details": []
+      },
+      "questions_too_many_choices": {
+        "count": 0,
+        "status": "good",
+        "details": []
+      }
+    },
+    "issues": [
+      {
+        "id": "DB-001",
+        "title": "データベースバックアップ戦略",
+        "severity": "medium",
+        "description": "バックアップ戦略が不明",
+        "recommendation": "定期的なバックアップスクリプトの実装",
+        "remediation_effort": "中"
+      }
+    ]
+  },
+  "code_quality": {
+    "good_points": [
+      {
+        "category": "architecture",
+        "title": "アーキテクチャ",
+        "details": [
+          "Django REST Frameworkの適切な使用",
+          "ViewSet、Serializer、Modelの分離が適切",
+          "JWT認証の実装が適切"
+        ]
+      },
+      {
+        "category": "data_model",
+        "title": "データモデル",
+        "details": [
+          "適切なリレーションシップの定義",
+          "related_nameの使用が適切",
+          "orderingの設定が適切"
+        ]
+      },
+      {
+        "category": "api_design",
+        "title": "API設計",
+        "details": [
+          "RESTful APIの設計が適切",
+          "シリアライザーでのバリデーションが適切",
+          "パスワード検証が適切に実装されている"
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "id": "CODE-001",
+        "title": "N+1クエリ問題の対策",
+        "severity": "low",
+        "description": "一部のViewでselect_relatedとprefetch_relatedを使用しているが、全体的な最適化が必要",
+        "recommendation": "すべてのリスト取得APIで最適化を徹底",
+        "remediation_effort": "中"
+      },
+      {
+        "id": "CODE-002",
+        "title": "エラーハンドリング",
+        "severity": "low",
+        "description": "try-except文が一部のビューに実装されているが、より包括的な対応が望ましい",
+        "recommendation": "より包括的なエラーハンドリングの実装",
+        "remediation_effort": "中"
+      }
+    ]
+  },
+  "performance": {
+    "database": {
+      "type": "SQLite3",
+      "status": "適切（開発環境）",
+      "recommendation": "本番環境ではPostgreSQLまたはMySQLへの移行を検討"
+    },
+    "cache": {
+      "type": "LocMemCache",
+      "status": "適切（開発環境）",
+      "recommendation": "本番環境ではRedisまたはMemcachedへの移行を検討"
+    },
+    "pagination": {
+      "page_size": 10,
+      "status": "適切"
+    }
+  },
+  "dependencies": {
+    "missing": [
+      {
+        "id": "DEP-001",
+        "package": "Pillow",
+        "severity": "high",
+        "description": "ImageFieldを使用しているがPillowがインストールされていない",
+        "impact": "画像アップロード機能が動作しない",
+        "recommendation": "pip install Pillowを実行",
+        "remediation_effort": "低"
+      }
+    ]
+  },
+  "action_plan": {
+    "phase1_emergency": {
+      "timeframe": "1週間以内",
+      "actions": [
+        {
+          "id": "AP-001",
+          "title": "SECRET_KEYの変更",
+          "priority": "critical",
+          "steps": [
+            "新しいランダムキーを生成",
+            "環境変数で管理",
+            ".envファイルを.gitignoreに追加"
+          ]
+        },
+        {
+          "id": "AP-002",
+          "title": "Pillowのインストール",
+          "priority": "high",
+          "steps": [
+            "pip install Pillowを実行",
+            "pip freeze > requirements.txtで依存関係を更新"
+          ]
+        },
+        {
+          "id": "AP-003",
+          "title": "DEBUG設定の修正",
+          "priority": "high",
+          "steps": [
+            "デフォルト値を'False'に変更"
+          ]
+        }
+      ]
+    },
+    "phase2_security": {
+      "timeframe": "2週間以内",
+      "actions": [
+        {
+          "id": "AP-004",
+          "title": "HTTPS/SSL設定の追加",
+          "priority": "high",
+          "steps": [
+            "本番環境用のセキュリティ設定を追加",
+            "環境別設定ファイルの分離を検討"
+          ]
+        },
+        {
+          "id": "AP-005",
+          "title": "ALLOWED_HOSTSの設定",
+          "priority": "high",
+          "steps": [
+            "本番ドメインを環境変数で設定"
+          ]
+        },
+        {
+          "id": "AP-006",
+          "title": "CORS設定の更新",
+          "priority": "high",
+          "steps": [
+            "本番フロントエンドURLを環境変数で管理"
+          ]
+        }
+      ]
+    },
+    "phase3_longterm": {
+      "timeframe": "1ヶ月以内",
+      "actions": [
+        {
+          "id": "AP-007",
+          "title": "データベースバックアップ戦略の実装",
+          "priority": "medium",
+          "steps": [
+            "自動バックアップスクリプトの作成",
+            "バックアップの定期実行設定"
+          ]
+        },
+        {
+          "id": "AP-008",
+          "title": "本番環境への準備",
+          "priority": "medium",
+          "steps": [
+            "PostgreSQL/MySQLへの移行検討",
+            "Redisキャッシュの導入検討",
+            "Dockerコンテナ化の検討"
+          ]
+        },
+        {
+          "id": "AP-009",
+          "title": "監視・ログ機能の強化",
+          "priority": "medium",
+          "steps": [
+            "アプリケーションログの集中管理",
+            "エラー通知の実装"
+          ]
+        }
+      ]
+    }
+  },
+  "checklist": [
+    {"category": "セキュリティ", "item": "SECRET_KEY", "status": "failed", "priority": "critical"},
+    {"category": "セキュリティ", "item": "DEBUG設定", "status": "warning", "priority": "high"},
+    {"category": "セキュリティ", "item": "ALLOWED_HOSTS", "status": "warning", "priority": "high"},
+    {"category": "セキュリティ", "item": "HTTPS/SSL設定", "status": "failed", "priority": "high"},
+    {"category": "セキュリティ", "item": "CORS設定", "status": "warning", "priority": "high"},
+    {"category": "セキュリティ", "item": "パスワード検証", "status": "passed", "priority": "n/a"},
+    {"category": "セキュリティ", "item": "JWT設定", "status": "passed", "priority": "n/a"},
+    {"category": "データ整合性", "item": "正解設定", "status": "passed", "priority": "n/a"},
+    {"category": "データ整合性", "item": "選択肢数", "status": "passed", "priority": "n/a"},
+    {"category": "データ整合性", "item": "孤立データ", "status": "passed", "priority": "n/a"},
+    {"category": "コード品質", "item": "アーキテクチャ", "status": "passed", "priority": "n/a"},
+    {"category": "コード品質", "item": "N+1対策", "status": "warning", "priority": "low"},
+    {"category": "依存関係", "item": "Pillow", "status": "failed", "priority": "high"},
+    {"category": "パフォーマンス", "item": "キャッシュ設定", "status": "warning", "priority": "medium"},
+    {"category": "パフォーマンス", "item": "データベース", "status": "warning", "priority": "medium"}
+  ],
+  "next_audit_date": "2025-12-17"
+}

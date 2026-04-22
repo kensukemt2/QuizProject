@@ -17,7 +17,7 @@ class QuestionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Question
-        fields = ['id', 'text', 'choices']
+        fields = ['id', 'text', 'image', 'choices']
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -80,8 +80,8 @@ class QuizAttemptSerializer(serializers.ModelSerializer):
                  'percentage', 'created_at', 'responses']
     
     def get_responses(self, obj):
-        # 回答の詳細情報を取得
-        responses = QuestionResponse.objects.filter(quiz_attempt=obj)
+        # prefetch_relatedで事前取得済みのresponsesを使用
+        responses = obj.responses.all()
         return QuestionResponseSerializer(responses, many=True).data
 
 class ResponseSerializer(serializers.Serializer):
@@ -90,11 +90,22 @@ class ResponseSerializer(serializers.Serializer):
     is_correct = serializers.BooleanField()
 
 class SaveQuizResultSerializer(serializers.Serializer):
-    category_id = serializers.IntegerField()
-    score = serializers.IntegerField()
-    total_questions = serializers.IntegerField()
-    responses = ResponseSerializer(many=True)  # ResponseSerializerのリスト
-    
+    category_id = serializers.IntegerField(min_value=1)
+    score = serializers.IntegerField(min_value=0)
+    total_questions = serializers.IntegerField(min_value=1)
+    responses = ResponseSerializer(many=True)
+
+    def validate(self, attrs):
+        if attrs['score'] > attrs['total_questions']:
+            raise serializers.ValidationError(
+                {"score": "スコアは問題数以下である必要があります"}
+            )
+        if not Category.objects.filter(id=attrs['category_id']).exists():
+            raise serializers.ValidationError(
+                {"category_id": "指定されたカテゴリが存在しません"}
+            )
+        return attrs
+
     def create(self, validated_data):
         user = self.context['request'].user
         responses_data = validated_data.pop('responses')
@@ -162,8 +173,17 @@ class UserStatsSerializer(serializers.Serializer):
 # quiz_api/serializers.py
 class PublicLeaderboardSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True)
+    total_attempts = serializers.IntegerField(read_only=True)
+    total_score = serializers.IntegerField(read_only=True)
+    total_questions = serializers.IntegerField(read_only=True)
     avg_percentage = serializers.FloatField(read_only=True)
-    
+    category_attempts = serializers.IntegerField(read_only=True, default=0)
+    category_score = serializers.IntegerField(read_only=True, default=0)
+    category_questions = serializers.IntegerField(read_only=True, default=0)
+    category_percentage = serializers.FloatField(read_only=True, default=0.0)
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'avg_percentage']
+        fields = ['id', 'username', 'total_attempts', 'total_score', 'total_questions',
+                  'avg_percentage', 'category_attempts', 'category_score',
+                  'category_questions', 'category_percentage']

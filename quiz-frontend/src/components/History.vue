@@ -76,6 +76,7 @@
 import api from '../utils/api';
 
 export default {
+  name: 'QuizHistory',
   data() {
     return {
       loading: true,
@@ -91,21 +92,17 @@ export default {
     async fetchHistory() {
       try {
         this.loading = true;
-        console.log('履歴取得開始');
         const response = await api.get('/api/quiz/history/');
-        console.log('履歴取得成功:', response.data);
         
         // レスポンスがページネーション形式かどうか確認
         let historyData;
         if (response.data && Array.isArray(response.data.results)) {
           // ページネーション形式の場合
           historyData = response.data.results;
-          console.log('ページネーションデータから履歴を取得:', historyData);
         } else if (Array.isArray(response.data)) {
           // 単純な配列の場合
           historyData = response.data;
         } else {
-          console.error('予期しない履歴データ形式:', response.data);
           this.error = '履歴データの形式が正しくありません';
           this.loading = false;
           return;
