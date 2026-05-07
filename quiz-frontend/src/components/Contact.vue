@@ -255,407 +255,214 @@ export default {
 <style scoped>
 .contact {
   min-height: 100vh;
+  background: #060608;
+  color: #f5f0e8;
   position: relative;
-  background: linear-gradient(to bottom right, #3B82F6, #1E40AF);
   overflow: hidden;
-  color: #FFFFFF;
-  font-family: Arial, sans-serif;
-  padding: 2rem 0;
+  padding-bottom: 3rem;
 }
 
-/* 背景グロー効果 */
-.background-glow {
-  position: absolute;
-  top: -100px;
-  left: 0;
-  right: 0;
-  width: 600px;
-  height: 600px;
-  margin: 0 auto;
-  background: radial-gradient(circle, rgba(147, 197, 253, 0.6) 0%, rgba(30, 64, 175, 0) 70%);
-  z-index: 0;
-}
-
-/* グリッド線 */
 .contact::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    linear-gradient(to right, rgba(147, 197, 253, 0.2) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(147, 197, 253, 0.2) 1px, transparent 1px);
-  background-size: 200px 200px;
-  z-index: 1;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.background-glow {
+  position: absolute;
+  top: -10%; left: -5%;
+  width: 40%;
+  height: 130%;
+  background: #e8001c;
+  transform: skewX(-8deg);
+  z-index: 0;
+  opacity: 0.5;
 }
 
 .content-container {
   position: relative;
   z-index: 2;
-  max-width: 800px;
+  max-width: 700px;
   margin: 0 auto;
-  padding: 0 1rem;
-}
-
-.contact-section {
-  background-color: rgba(59, 130, 246, 0.7);
-  border-radius: 20px;
-  padding: 2rem;
-  position: relative;
-  overflow: hidden;
-  border-top: 5px solid rgba(249, 115, 22, 0.7);
+  padding: 40px 24px;
 }
 
 .contact-section h1 {
-  text-align: center;
-  margin-bottom: 1rem;
-  font-size: 2.5rem;
-  color: white;
+  font-size: 28px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f5f0e8;
+  text-shadow: 4px 4px 0 #e8001c;
+  margin-bottom: 8px;
 }
-
 .contact-description {
-  text-align: center;
-  margin-bottom: 2rem;
-  color: #DBEAFE;
-  line-height: 1.6;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.7;
+  margin-bottom: 28px;
+  border-left: 2px solid #e8001c;
+  padding-left: 12px;
 }
 
-/* 成功メッセージ */
+/* 送信完了 */
 .success-message {
-  background-color: rgba(16, 185, 129, 0.2);
-  border: 2px solid #10B981;
-  border-radius: 15px;
-  padding: 2rem;
+  background: #0e0e12;
+  border: 1px solid #1a1a1a;
+  border-left: 4px solid #22c55e;
+  padding: 28px 24px;
   text-align: center;
-  margin-bottom: 2rem;
-}
-
-.success-icon {
-  width: 60px;
-  height: 60px;
-  background-color: #10B981;
-  border-radius: 50%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
-  font-size: 2rem;
-  color: white;
-  font-weight: bold;
+  gap: 14px;
 }
-
-.success-message h3 {
-  color: #10B981;
-  margin-bottom: 1rem;
+.success-icon {
+  width: 48px; height: 48px;
+  background: #22c55e;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 700; color: #fff;
+  clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
 }
-
+.success-message h3 { font-size: 18px; letter-spacing: 0.06em; color: #f5f0e8; }
+.success-message p { font-size: 13px; color: #555; }
 .new-inquiry-btn {
-  background: linear-gradient(to bottom, #3B82F6, #2563EB);
-  color: white;
-  border: none;
-  padding: 0.8rem 2rem;
-  border-radius: 25px;
-  font-weight: bold;
+  padding: 10px 24px;
+  background: transparent;
+  border: 1px solid #333;
+  color: #555;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 1rem;
+  transition: all 0.15s;
+  clip-path: polygon(0 0, 100% 0, 94% 100%, 0 100%);
 }
+.new-inquiry-btn:hover { border-color: #e8001c; color: #e8001c; }
 
-.new-inquiry-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* フォームスタイル */
+/* フォーム */
 .contact-form {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 15px;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  background: #0e0e12;
+  border: 1px solid #1a1a1a;
+  border-left: 4px solid #e8001c;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.contact-form::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 0 40px 40px 0;
+  border-color: transparent #060608 transparent transparent;
 }
 
-.form-group {
-  margin-bottom: 1.5rem;
-}
+.form-group { display: flex; flex-direction: column; gap: 6px; }
 
 .form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #DBEAFE;
-  font-weight: bold;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #555;
 }
+.required::after { content: ' *'; color: #e8001c; }
 
-.required::after {
-  content: ' *';
-  color: #F97316;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  padding: 0.8rem;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-}
-
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+.form-control {
+  padding: 12px 14px;
+  background: #0a0a0e;
+  border: 1px solid #1e1e22;
+  color: #f5f0e8;
+  font-size: 14px;
   outline: none;
-  border-color: #F97316;
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-.form-group input.error,
-.form-group select.error,
-.form-group textarea.error {
-  border-color: #EF4444;
-}
-
-.error-message {
-  display: block;
-  color: #FCA5A5;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-}
-
-.character-count {
-  text-align: right;
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin-top: 0.25rem;
-}
-
-/* チェックボックス */
-.checkbox-group {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  cursor: pointer;
-  line-height: 1.5;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: auto;
-  margin: 0;
-}
-
-.privacy-link {
-  color: #FACC15;
-  text-decoration: none;
-}
-
-.privacy-link:hover {
-  text-decoration: underline;
-}
-
-.form-actions {
-  text-align: center;
-  margin-top: 2rem;
-}
-
-.submit-btn {
-  background: linear-gradient(to bottom, #F97316, #EA580C);
-  color: white;
-  border: none;
-  padding: 1rem 3rem;
-  border-radius: 25px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.submit-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
+  transition: border-color 0.15s;
   width: 100%;
-  height: 5px;
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 25px 25px 0 0;
+}
+.form-control:focus { border-color: #e8001c; }
+.form-control.error { border-color: #ef4444; }
+.form-control::placeholder { color: #333; }
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.6;
+  font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
 }
 
-.submit-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+.error-message { font-size: 11px; color: #ef4444; letter-spacing: 0.05em; }
+.char-count { font-size: 11px; color: #444; text-align: right; letter-spacing: 0.05em; }
+.char-count.warning { color: #f5e642; }
+.char-count.error { color: #ef4444; }
+
+/* カテゴリ選択 */
+.form-select {
+  padding: 12px 36px 12px 14px;
+  background: #0a0a0e;
+  border: 1px solid #1e1e22;
+  color: #f5f0e8;
+  font-size: 14px;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+.form-select:focus { border-color: #e8001c; }
+.select-wrapper { position: relative; }
+.select-arrow {
+  position: absolute;
+  right: 12px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: #444;
+  pointer-events: none;
 }
 
-.submit-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid transparent;
-  border-top: 2px solid white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* お問い合わせ情報 */
-.contact-info {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 15px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-}
-
-.contact-info h3 {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: #F97316;
-}
-
-.info-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.info-card {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 1.5rem;
-  text-align: center;
-  transition: transform 0.3s ease;
-}
-
-.info-card:hover {
-  transform: translateY(-3px);
-}
-
-.info-icon {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-.info-card h4 {
-  color: #FACC15;
-  margin-bottom: 0.5rem;
-}
-
-.info-card p {
-  color: #DBEAFE;
-  line-height: 1.5;
-}
-
-/* ホームボタン */
-.back-to-home {
-  text-align: center;
-}
-
-.home-btn {
-  display: inline-flex;
+/* 送信ボタン */
+.submit-btn {
+  padding: 14px;
+  background: #e8001c;
+  color: #fff;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  clip-path: polygon(0 0, 100% 0, 97% 100%, 0 100%);
+  box-shadow: 4px 4px 0 rgba(232,0,28,0.3);
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.8rem 2rem;
-  background: linear-gradient(to bottom, #10B981, #059669);
-  color: white;
-  text-decoration: none;
-  border-radius: 25px;
-  font-weight: bold;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  gap: 8px;
 }
+.submit-btn:hover { background: #ff1a35; transform: translate(-2px,-2px); box-shadow: 6px 6px 0 rgba(232,0,28,0.4); }
+.submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-.home-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 5px;
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 25px 25px 0 0;
+.loading-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.home-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+/* 注意書き */
+.form-note {
+  font-size: 11px;
+  color: #333;
+  letter-spacing: 0.05em;
+  line-height: 1.6;
 }
-
-.btn-icon {
-  margin-right: 0.5rem;
-  font-size: 1.2rem;
-}
-
-/* レスポンシブデザイン */
-@media (max-width: 768px) {
-  .contact-section {
-    padding: 1.5rem;
-  }
-  
-  .contact-section h1 {
-    font-size: 2rem;
-  }
-  
-  .contact-form {
-    padding: 1.5rem;
-  }
-  
-  .info-cards {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .contact {
-    padding: 1rem 0;
-  }
-  
-  .content-container {
-    padding: 0 0.5rem;
-  }
-  
-  .contact-section {
-    padding: 1rem;
-  }
-  
-  .contact-section h1 {
-    font-size: 1.8rem;
-  }
-  
-  .contact-form {
-    padding: 1rem;
-  }
-  
-  .submit-btn {
-    padding: 0.8rem 2rem;
-    font-size: 1rem;
-  }
-}
+.form-note a { color: #e8001c; text-decoration: none; }
 </style>
