@@ -429,24 +429,26 @@
 }
 
 .category-icon {
-  width: 40px;
-  height: 40px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
+  width: 44px;
+  height: 44px;
+  background: #0a0a0e;
+  border: 1px solid #1e1e22;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   color: #f5f0e8;
-  border-radius: 0;
-  clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
+  clip-path: polygon(0 0, 100% 0, 80% 100%, 0 100%);
+  position: relative;
+  flex-shrink: 0;
+  letter-spacing: 0;
 }
 
-.category-card.anime .category-icon { border-color: rgba(232,0,28,0.3); color: #e8001c; }
-.category-card.game  .category-icon { border-color: rgba(34,197,94,0.3); color: #22c55e; }
-.category-card.manga .category-icon { border-color: rgba(245,230,66,0.3); color: #f5e642; }
-.category-card.pop   .category-icon { border-color: rgba(96,165,250,0.3); color: #60a5fa; }
+.category-card.anime .category-icon {
+.category-card.game  .category-icon {
+.category-card.manga .category-icon {
+.category-card.pop   .category-icon {
 
 .category-btn {
   background: transparent;

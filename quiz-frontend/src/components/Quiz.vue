@@ -958,15 +958,25 @@ export default {
 .category-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 
 .category-icon {
-  width: 40px; height: 40px;
-  background: rgba(255,255,255,0.08);
+  width: 52px;
+  height: 52px;
+  background: #0a0a0e;
+  border: 1px solid #1e1e22;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 700;
-  clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
+  color: #f5f0e8;
+  clip-path: polygon(0 0, 100% 0, 78% 100%, 0 100%);
   flex-shrink: 0;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.category-btn:hover .category-icon {
+  background: #e8001c;
+  border-color: #e8001c;
 }
 
 .category-name {
