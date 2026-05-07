@@ -11,7 +11,7 @@ const actions = {
   async login({ commit, dispatch }, credentials) {
     try {
       // APIへのリクエスト例
-      const response = await fetch('http://localhost:8000/api/token/', {
+      const response = await fetch('/api/token/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,9 +46,7 @@ const actions = {
   
   // 登録
   async register(_, userData) {
-    const API_URL = 'http://localhost:8000';
-    
-    const response = await fetch(`${API_URL}/api/register/`, {
+    const response = await fetch('/api/register/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -80,7 +78,7 @@ const actions = {
     
     const refreshToken = localStorage.getItem('refresh_token');
     try {
-      const response = await axios.post('http://localhost:8000/api/token/refresh/', {
+      const response = await axios.post('/api/token/refresh/', {
         refresh: refreshToken
       });
       const newToken = response.data.access;
@@ -107,7 +105,7 @@ const actions = {
 
 
       // 認証形式をJWTに合わせる
-      const response = await fetch('http://localhost:8000/api/profile/', {
+      const response = await fetch('/api/profile/', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

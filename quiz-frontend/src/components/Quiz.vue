@@ -338,7 +338,7 @@ export default {
       try {
         this.loading = true;
         console.log('カテゴリ取得開始');
-        const response = await axios.get('http://localhost:8000/api/categories/');
+        const response = await axios.get('/api/categories/');
         console.log('カテゴリ取得成功:', response.data);
         
         // レスポンスがページネーション形式かどうか確認
@@ -424,10 +424,10 @@ export default {
         
         if (sessionId) {
           // 既存セッションを使用して継続取得
-          url = `http://localhost:8000/api/questions/session_questions/?category=${categoryIdNum}&limit=10&session_id=${sessionId}`;
+          url = `/api/questions/session_questions/?category=${categoryIdNum}&limit=10&session_id=${sessionId}`;
         } else {
           // 新しいセッションを開始
-          url = `http://localhost:8000/api/questions/session_questions/?category=${categoryIdNum}&limit=10`;
+          url = `/api/questions/session_questions/?category=${categoryIdNum}&limit=10`;
         }
         
         console.log('リクエスト先URL:', url);
@@ -610,7 +610,7 @@ export default {
         try {
           // セッションリセットAPIを呼び出し
           const categoryIdNum = Number(this.selectedCategory.id);
-          const url = `http://localhost:8000/api/questions/session_questions/?category=${categoryIdNum}&limit=10&session_id=${sessionId}&reset=true`;
+          const url = `/api/questions/session_questions/?category=${categoryIdNum}&limit=10&session_id=${sessionId}&reset=true`;
           
           console.log('セッションリセット中...', url);
           await axios.get(url);
@@ -688,7 +688,7 @@ export default {
       if (imagePath.startsWith('http')) {
         return imagePath;
       }
-      return `http://localhost:8000${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+      return `${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     },
     initQuiz() {
       // コンポーネントの状態を初期化
@@ -736,7 +736,7 @@ export default {
         this.error = null;
         
         // まずカテゴリー情報を取得
-        const categoriesResponse = await axios.get('http://localhost:8000/api/categories/');
+        const categoriesResponse = await axios.get('/api/categories/');
         let categoriesData = [];
         
         if (Array.isArray(categoriesResponse.data)) {

@@ -32,7 +32,7 @@ const actions = {
       }
       
       
-      const response = await axios.get('http://localhost:8000/api/user/stats/', {
+      const response = await axios.get('/api/user/stats/', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
