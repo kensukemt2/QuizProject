@@ -107,718 +107,461 @@
               <span>{{ user.username || '名無し' }} - {{ formatPercentage(user.avg_percentage || 0) }}</span>
             </template>
             <span v-if="isAuthenticated" class="all-rankings" @click="$router.push('/leaderboard')">全ランキング ▶</span>
-          </template>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script>
-import { mapGetters } from 'vuex';
-import axios from 'axios';
-
-export default {
-  name: 'HomePage',
-  data() {
-    return {
-      userStats: {
-        total_attempts: 0
-      },
-      categories: [],
-      loading: false,
-      error: null,
-      // リーダーボード関連の新しいプロパティ
-      leaderboard: [],
-      leaderboardLoading: false,
-      leaderboardError: null
-    };
-  },
-  computed: {
-    ...mapGetters('auth', ['isAuthenticated', 'user'])
-  },
-  methods: {
-    startQuiz() {
-      this.$router.push('/quiz');
-    },
-    startGuestQuiz() {
-      // Vuexストアにゲストモードフラグを保存（より確実）
-      this.$store.commit('quiz/SET_GUEST_MODE', true);
-      
-      // ローカルストレージにも保存
-      localStorage.setItem('quizMode', 'guest');
-      
-      // 明示的なクエリパラメータでルーティング
-      this.$router.push({
-        path: '/quiz',
-        query: { mode: 'guest' }
-      });
-    },
-    startCategoryQuiz(categoryId) {
-      // カテゴリーIDをもとにルーティング
-      this.$router.push({
-        path: '/quiz',
-        query: { 
-          category: categoryId,
-          mode: this.isAuthenticated ? 'user' : 'guest'
-        }
-      });
-    },
-    goToLogin() {
-      this.$router.push('/login');
-    },
-    async fetchUserStats() {
-      if (!this.isAuthenticated) {
-        this.userStats = {
-          total_attempts: 0,
-          total_categories_played: 0,
-          best_category: null,
-          avg_percentage: 0
-        };
-        return;
-      }
-      
-      try {
-        // ログインユーザーの場合、統計情報を取得
-        const response = await this.$store.dispatch('user/fetchStats');
-        if (response) {
-          this.userStats = response;
-        }
-      } catch (error) {
-        console.error('ユーザー統計の取得に失敗:', error);
-        // エラー時のフォールバック
-        this.userStats = {
-          total_attempts: 0,
-          total_categories_played: 0,
-          best_category: null,
-          avg_percentage: 0
-        };
-      }
-    },
-    // 新しく追加：カテゴリーをAPIから取得
-    async fetchCategories() {
-      try {
-        this.loading = true;
-        this.error = null;
-        
-        // APIからカテゴリーデータを取得
-        const response = await axios.get('/api/categories/');
-        
-        // レスポンスフォーマットの確認と処理
-        let categoryData = [];
-        if (Array.isArray(response.data)) {
-          categoryData = response.data;
-        } else if (response.data && Array.isArray(response.data.results)) {
-          categoryData = response.data.results;
-        } else {
-          throw new Error('予期しないレスポンス形式');
-        }
-        
-        // カテゴリーデータの加工（アイコン情報の追加）
-        this.categories = categoryData.map(category => {
-          return {
-            ...category,
-            // カテゴリー名の最初の文字をアイコン文字として使用
-            icon: category.name.charAt(0).toUpperCase(),
-            // 背景色クラスをランダムに割り当て
-            colorClass: this.getRandomColorClass()
-          };
-        });
-        
-      } catch (error) {
-        console.error('カテゴリーの取得に失敗しました:', error);
-        this.error = 'カテゴリーの読み込みに失敗しました';
-      } finally {
-        this.loading = false;
-      }
-    },
-    // カテゴリーに色をランダムに割り当て
-    getRandomColorClass() {
-      const colors = ['anime', 'game', 'manga', 'pop'];
-      return colors[Math.floor(Math.random() * colors.length)];
-    },
-    // リーダーボードデータの取得
-    async fetchLeaderboard() {
-      try {
-        this.leaderboardLoading = true;
-        this.leaderboardError = null;
-        
-        // 公開エンドポイントを使用
-        const response = await axios.get('/api/public/leaderboard/');
-        
-        // レスポンスフォーマットの確認と処理
-        if (Array.isArray(response.data)) {
-          this.leaderboard = response.data.slice(0, 3);
-        } else if (response.data && Array.isArray(response.data.results)) {
-          this.leaderboard = response.data.results.slice(0, 3);
-        } else {
-          throw new Error('予期しないレスポンス形式');
-        }
-        
-      } catch (error) {
-        console.error('リーダーボードの取得に失敗しました:', error);
-        this.leaderboardError = 'ランキングデータの読み込みに失敗しました';
-        
-        // フォールバックデータ
-        this.useDefaultLeaderboard();
-      } finally {
-        this.leaderboardLoading = false;
-      }
-    },
-
-    // フォールバックデータの設定
-    useDefaultLeaderboard() {
-      this.leaderboard = [
-        { username: 'アニメマスター', percentage: 99.1, rank: 1 },
-        { username: 'ゲームキング', percentage: 97.8, rank: 2 },
-        { username: 'マンガヒーロー', percentage: 95.5, rank: 3 }
-      ];
-    },
-    // ランキングクラスの取得（金、銀、銅）
-    getRankClass(index) {
-      const rankClasses = ['gold', 'silver', 'bronze'];
-      return index < rankClasses.length ? rankClasses[index] : '';
-    },
-    
-    // パーセンテージのフォーマット
-    formatPercentage(value) {
-      // 数値であることを確認
-      const num = parseFloat(value);
-      return isNaN(num) ? '0.0%' : `${num.toFixed(1)}%`;
-    }
-  },
-  created() {
-    // コンポーネント作成時にカテゴリーとユーザー統計を取得
-    this.fetchCategories();
-    this.fetchUserStats();
-    this.fetchLeaderboard(); // リーダーボードデータの取得を追加
-  }
-};
-</script>
 
 <style scoped>
-/* ベース要素 */
+/* ── ベース ── */
 .home {
   min-height: 100vh;
   position: relative;
-  background: linear-gradient(to bottom right, #3B82F6, #1E40AF);
+  background: #060608;
   overflow: hidden;
-  color: #FFFFFF;
-  font-family: Arial, sans-serif;
-  padding-bottom: 2rem;
+  color: #f5f0e8;
+  padding-bottom: 3rem;
 }
 
-/* 背景グロー効果 */
+/* 斜めスラッシュ背景 */
 .background-glow {
   position: absolute;
-  top: -100px;
-  left: 0;
-  right: 0;
-  width: 600px;
-  height: 600px;
-  margin: 0 auto;
-  background: radial-gradient(circle, rgba(147, 197, 253, 0.6) 0%, rgba(30, 64, 175, 0) 70%);
+  top: -10%; right: -5%;
+  width: 52%;
+  height: 130%;
+  background: #e8001c;
+  transform: skewX(-8deg);
   z-index: 0;
 }
 
-/* グリッド線 */
+/* グリッドパターン */
 .home::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    linear-gradient(to right, rgba(147, 197, 253, 0.2) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(147, 197, 253, 0.2) 1px, transparent 1px);
-  background-size: 200px 200px;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
   z-index: 1;
+  pointer-events: none;
 }
 
-/* コンテンツコンテナ */
-.content-container {
-  position: relative;
+/* 黄色ライン */
+.home::after {
+  content: '';
+  position: absolute;
+  top: -10%; right: 44%;
+  width: 4px;
+  height: 130%;
+  background: #f5e642;
+  transform: skewX(-8deg);
   z-index: 2;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
+  opacity: 0.8;
 }
 
-/* ヘッダー */
+/* ── ヘッダー ── */
 .header {
-  height: 70px;
-  background-color: rgba(37, 99, 235, 0.9);
+  height: 56px;
+  background: rgba(6,6,8,0.95);
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 0 2rem;
-  border-bottom: 2px solid #F97316;
+  align-items: stretch;
+  padding: 0;
+  border-bottom: 2px solid #1a1a1a;
   position: relative;
   z-index: 10;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: #e8001c;
 }
 
 .logo {
   display: flex;
   align-items: center;
+  padding: 0 24px;
 }
 
 .logo-box {
   width: 40px;
   height: 40px;
-  background-color: #F97316;
-  color: white;
+  background: #e8001c;
+  color: #fff;
   display: flex;
-  justify-content: center;
   align-items: center;
-  font-weight: bold;
-  font-size: 26px;
-  border-radius: 10px;
-  margin-right: 10px;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  clip-path: polygon(0 0, 85% 0, 100% 100%, 0 100%);
+  border-radius: 0;
+  margin-right: 0;
+  padding-right: 6px;
 }
 
 .logo h1 {
-  color: white;
-  font-size: 24px;
+  color: #f5f0e8;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding-left: 14px;
   margin: 0;
 }
 
 .user-badge {
-  width: 40px;
-  height: 40px;
-  background-color: #F97316;
-  border: 2px solid white;
-  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  background: #e8001c;
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 85% 100%, 0 100%);
   display: flex;
-  justify-content: center;
   align-items: center;
-  font-weight: bold;
-  font-size: 16px;
-  color: white;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  margin: auto 24px auto 0;
 }
 
-/* ヒーローセクション */
+/* ── コンテンツエリア ── */
+.content-container {
+  position: relative;
+  z-index: 3;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ── ヒーローセクション ── */
 .hero-section {
-  background-color: rgba(59, 130, 246, 0.7);
-  border-radius: 20px;
-  padding: 2rem;
-  margin-top: 2rem;
+  background: rgba(14,14,18,0.85);
+  border: 1px solid #1a1a1a;
+  border-left: 4px solid #e8001c;
+  padding: 2.5rem 2rem;
+  margin-top: 2.5rem;
   position: relative;
   text-align: center;
   overflow: hidden;
-  border-top: 5px solid rgba(249, 115, 22, 0.7);
 }
 
-.hero-text {
-  margin-bottom: 2rem;
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 0 40px 40px 0;
+  border-color: transparent #060608 transparent transparent;
 }
+
+/* キャラクターは非表示（ペルソナスタイルでは不要） */
+.character { display: none; }
+
+.hero-text { margin-bottom: 2rem; }
 
 .hero-text h2 {
-  font-size: 2.5rem;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: #f5f0e8;
+  text-shadow: 4px 4px 0 #e8001c;
   margin-bottom: 1rem;
-  color: white;
 }
 
 .hero-text p {
-  font-size: 1.2rem;
-  color: #DBEAFE;
-  max-width: 600px;
+  font-size: 13px;
+  color: rgba(245,240,232,0.5);
+  line-height: 1.8;
+  max-width: 500px;
   margin: 0 auto;
-}
-
-/* キャラクター */
-.character {
-  position: absolute;
-  left: 10%;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 100px;
-  height: 100px;
-}
-
-.face {
-  width: 100px;
-  height: 100px;
-  background-color: #FACC15;
-  border-radius: 50%;
-  position: relative;
-}
-
-.eye {
-  width: 20px;
-  height: 20px;
-  background-color: white;
-  border-radius: 50%;
-  position: absolute;
-}
-
-.eye.left {
-  top: 30px;
-  left: 20px;
-}
-
-.eye.right {
-  top: 30px;
-  right: 20px;
-}
-
-.eye-pupil {
-  width: 10px;
-  height: 10px;
-  background-color: #1E40AF;
-  border-radius: 50%;
-  position: absolute;
-}
-
-.eye-pupil.left {
-  top: 35px;
-  left: 25px;
-}
-
-.eye-pupil.right {
-  top: 35px;
-  right: 25px;
-}
-
-.mouth {
-  position: absolute;
-  width: 30px;
-  height: 15px;
-  border-bottom: 4px solid #1E40AF;
-  border-radius: 50%;
-  bottom: 25px;
-  left: 35px;
-}
-
-.hair {
-  position: absolute;
-  top: -20px;
-  left: 0;
-  width: 100px;
-  height: 30px;
-  background-color: transparent;
-  border-top: 10px solid #FB923C;
-  border-radius: 50% 50% 0 0;
+  border-left: 2px solid #e8001c;
+  padding-left: 12px;
+  text-align: left;
 }
 
 /* ボタン */
 .btn {
-  padding: 0.8rem 2rem;
-  font-size: 1.2rem;
-  border-radius: 22.5px;
-  cursor: pointer;
+  padding: 0.9rem 2.4rem;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   border: none;
-  transition: all 0.3s ease;
-  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  clip-path: polygon(0 0, 100% 0, 95% 100%, 0 100%);
 }
 
 .primary-btn {
-  background: linear-gradient(to bottom, #F97316, #EA580C);
-  color: white;
+  background: #f5e642;
+  color: #060608;
+  animation: none;
   position: relative;
-  overflow: hidden;
 }
 
-.primary-btn::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 5px;
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 22.5px 22.5px 0 0;
-}
-
-.primary-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
+.primary-btn::before { content: '▶ '; font-size: 10px; }
+.primary-btn:hover { background: #f5f0e8; transform: translateX(4px); }
 
 .secondary-btn {
-  background-color: #1E40AF;
-  color: #93C5FD;
-  border: 2px solid #93C5FD;
+  background: transparent;
+  color: #555;
+  border: 1px solid #333;
   margin-left: 1rem;
+  clip-path: polygon(0 0, 100% 0, 95% 100%, 0 100%);
+}
+.secondary-btn:hover { border-color: #666; color: #f5f0e8; }
+
+/* ユーザー統計 */
+.user-stats {
+  display: flex;
+  gap: 1px;
+  margin-top: 1.5rem;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.secondary-btn:hover {
-  background-color: #2563EB;
-  color: white;
+.user-stats p {
+  flex: 1;
+  background: rgba(245,240,232,0.04);
+  border: 1px solid rgba(245,240,232,0.08);
+  border-top: 2px solid #e8001c;
+  padding: 12px 14px;
+  margin: 0;
+  font-size: 12px;
+  color: #888;
+  letter-spacing: 0.05em;
+  border-left: none;
 }
 
-/* カテゴリーセクション */
+.user-stats p:first-child { border-left: 1px solid rgba(245,240,232,0.08); }
+
+/* ── カテゴリセクション ── */
 .category-section {
   margin-top: 3rem;
 }
 
 .category-section h3 {
-  font-size: 1.5rem;
-  color: #F97316;
-  text-align: left;
-  margin-bottom: 0.5rem;
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  color: #f5f0e8;
+  margin-bottom: 0;
+  text-transform: uppercase;
+  display: inline-block;
 }
 
 .category-underline {
+  width: 100%;
+  height: 1px;
+  background: #1a1a1a;
+  margin: 8px 0 1.5rem;
+  position: relative;
+}
+
+.category-underline::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
   width: 160px;
-  height: 3px;
-  background-color: #F97316;
-  margin-bottom: 1.5rem;
+  height: 2px;
+  background: #e8001c;
+  margin-top: -0.5px;
 }
 
 .categories {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 2px;
 }
 
 .category-card {
-  background-color: rgba(59, 130, 246, 0.7);
-  border-radius: 15px;
+  background: #0e0e12;
+  border: 1px solid #111;
   padding: 1.5rem;
-  text-align: center;
+  text-align: left;
   position: relative;
-  height: 180px;
-  transition: transform 0.3s ease;
+  height: auto;
+  min-height: 120px;
+  transition: all 0.2s;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.category-card::after {
+  content: '';
+  position: absolute;
+  right: 18px;
+  bottom: 14px;
+  font-family: 'Reggae One', sans-serif;
+  font-size: 48px;
+  color: rgba(255,255,255,0.03);
+  line-height: 1;
 }
 
 .category-card:hover {
-  transform: translateY(-5px);
+  background: #111118;
+  transform: translateX(4px);
+  border-color: rgba(255,255,255,0.1);
 }
 
+/* カテゴリーの左ライン（colorClassを使用） */
 .category-line {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 5px;
-  height: 100%;
-  border-radius: 15px 0 0 15px;
+  top: 0; left: 0; bottom: 0;
+  width: 3px;
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.25s;
 }
 
-.category-card.anime .category-line { background-color: #F97316; }
-.category-card.game .category-line { background-color: #10B981; }
-.category-card.manga .category-line { background-color: #FACC15; }
-.category-card.pop .category-line { background-color: #93C5FD; }
+.category-card:hover .category-line { transform: scaleY(1); }
+
+.category-card.anime .category-line  { background: #e8001c; }
+.category-card.game  .category-line  { background: #22c55e; }
+.category-card.manga .category-line  { background: #f5e642; }
+.category-card.pop   .category-line  { background: #60a5fa; }
 
 .category-card h4 {
-  font-size: 1.2rem;
-  margin-top: 0.5rem;
-  margin-bottom: 1.5rem;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #f5f0e8;
+  margin: 0;
 }
 
 .category-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
   display: flex;
-  justify-content: center;
   align-items: center;
-  margin: 0 auto 1.5rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: white;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #f5f0e8;
+  border-radius: 0;
+  clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
 }
 
-.category-card.anime .category-icon { background-color: #F97316; }
-.category-card.game .category-icon { background-color: #10B981; }
-.category-card.manga .category-icon { background-color: #FACC15; }
-.category-card.pop .category-icon { 
-  background-color: #93C5FD;
-  color: #1E40AF;
-}
+.category-card.anime .category-icon { border-color: rgba(232,0,28,0.3); color: #e8001c; }
+.category-card.game  .category-icon { border-color: rgba(34,197,94,0.3); color: #22c55e; }
+.category-card.manga .category-icon { border-color: rgba(245,230,66,0.3); color: #f5e642; }
+.category-card.pop   .category-icon { border-color: rgba(96,165,250,0.3); color: #60a5fa; }
 
 .category-btn {
-  background-color: #1E40AF;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 15px;
+  background: transparent;
+  border: 1px solid #333;
+  color: #555;
+  padding: 6px 14px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.15s;
+  clip-path: polygon(0 0, 100% 0, 90% 100%, 0 100%);
+  align-self: flex-start;
+  margin-top: auto;
 }
 
-.category-btn:hover {
-  background-color: #2563EB;
-}
+.category-btn:hover { border-color: #e8001c; color: #e8001c; }
 
-/* 追加スタイル */
+/* ローディング・エラー */
 .loading-categories, .error-message, .no-categories {
   text-align: center;
   padding: 2rem;
-  background-color: rgba(59, 130, 246, 0.7);
-  border-radius: 15px;
-  margin-top: 1rem;
+  background: #0e0e12;
+  border: 1px solid #1a1a1a;
+  border-left: 4px solid #e8001c;
+  color: #888;
 }
-
-.loading-categories::after {
-  content: '';
-  display: inline-block;
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid #FFF;
-  border-radius: 50%;
-  border-top-color: transparent;
-  animation: spin 1s linear infinite;
-  margin-left: 0.5rem;
-}
-
-.error-message {
-  background-color: rgba(239, 68, 68, 0.7);
-}
-
+.error-message { border-left-color: #ef4444; color: #ef4444; }
 .retry-btn {
-  background-color: #1E40AF;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 15px;
+  background: transparent;
+  border: 1px solid #333;
+  color: #555;
+  padding: 8px 18px;
   cursor: pointer;
   margin-top: 0.5rem;
+  transition: all 0.15s;
 }
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+.retry-btn:hover { border-color: #e8001c; color: #e8001c; }
 
 /* ゲスト情報 */
 .guest-info {
   margin-top: 3rem;
-  background-color: rgba(30, 64, 175, 0.7);
+  background: #0e0e12;
+  border: 1px solid #1a1a1a;
+  border-left: 4px solid #f5e642;
   padding: 1.5rem;
-  border-radius: 8px;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .guest-info h3 {
-  color: #FCD34D;
+  color: #f5e642;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   margin-bottom: 1rem;
 }
 
-.guest-info ul {
-  text-align: left;
-  padding-left: 1.5rem;
-}
+.guest-info ul { text-align: left; padding-left: 1.2rem; }
+.guest-info li { margin: 0.4rem 0; color: #555; font-size: 13px; }
 
-.guest-info li {
-  margin: 0.5rem 0;
-  color: #DBEAFE;
-}
-
-/* リーダーボードプレビュー */
+/* リーダーボード */
 .leaderboard-preview {
-  margin-top: 3rem;
+  margin-top: 2.5rem;
   display: flex;
   justify-content: center;
 }
 
 .leaderboard-container {
-  background-color: #1E40AF;
-  border-radius: 10px;
-  padding: 0.5rem 1rem;
+  background: #0e0e12;
+  border: 1px solid #1a1a1a;
+  border-top: 2px solid #e8001c;
+  padding: 10px 20px;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  font-size: 0.9rem;
+  gap: 12px;
+  font-size: 12px;
+  color: #555;
+  clip-path: polygon(0 0, 100% 0, 98% 100%, 0 100%);
 }
 
 .rank {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
+  width: 16px; height: 16px;
+  border-radius: 0;
   text-align: center;
   line-height: 16px;
-  font-size: 0.8rem;
-  font-weight: bold;
+  font-size: 11px;
+  font-weight: 700;
+  clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
 }
+.rank.gold   { background: #FFD700; color: #060608; }
+.rank.silver { background: #C0C0C0; color: #060608; }
+.rank.bronze { background: #CD7F32; color: #060608; }
 
-.rank.gold { background-color: #FFD700; }
-.rank.silver { background-color: #C0C0C0; }
-.rank.bronze { background-color: #CD7F32; }
+.all-rankings { color: #e8001c; cursor: pointer; margin-left: auto; letter-spacing: 0.05em; }
+.all-rankings:hover { color: #ff1a35; }
+.loading-indicator { color: #555; }
 
-.all-rankings {
-  color: #F97316;
-  margin-left: auto;
-  cursor: pointer;
-}
+/* ゲストオプション */
+.guest-options { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.authenticated-options { display: flex; flex-direction: column; align-items: center; }
 
-/* リーダーボード関連のスタイル追加 */
-.loading-indicator {
-  display: inline-flex;
-  align-items: center;
-}
-
-.loading-indicator::after {
-  content: '';
-  display: inline-block;
-  width: 0.8rem;
-  height: 0.8rem;
-  border: 2px solid #F97316;
-  border-radius: 50%;
-  border-top-color: transparent;
-  animation: spin 1s linear infinite;
-  margin-left: 0.5rem;
-}
-
-/* ユーザー統計 */
-.user-stats {
-  margin-top: 1.5rem;
-  color: #DBEAFE;
-}
-
-/* モバイル対応 */
+/* レスポンシブ */
 @media (max-width: 768px) {
-  .header {
-    padding: 0 1rem;
-  }
-  
-  .logo h1 {
-    font-size: 20px;
-  }
-  
-  .character {
-    display: none;
-  }
-  
-  .hero-text h2 {
-    font-size: 1.8rem;
-  }
-  
-  .hero-text p {
-    font-size: 1rem;
-  }
-  
-  .guest-options {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .secondary-btn {
-    margin-left: 0;
-    margin-top: 1rem;
-  }
-  
-  .categories {
-    grid-template-columns: 1fr;
-  }
-  
-  .leaderboard-container {
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 1rem;
-  }
+  .header { padding: 0; }
+  .logo h1 { font-size: 14px; }
+  .hero-text h2 { font-size: 1.6rem; }
+  .hero-text p { font-size: 12px; }
+  .secondary-btn { margin-left: 0; margin-top: 0.5rem; }
+  .categories { grid-template-columns: 1fr 1fr; }
+  .leaderboard-container { flex-wrap: wrap; justify-content: center; }
 }
 
-/* アニメーション */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-.primary-btn {
-  animation: pulse 2s infinite;
+@media (max-width: 480px) {
+  .categories { grid-template-columns: 1fr; }
 }
 </style>

@@ -94,245 +94,251 @@ export default {
 </script>
 
 <style scoped>
+:root {
+  --red: #e8001c;
+  --black: #060608;
+  --dark: #0e0e12;
+  --white: #f5f0e8;
+  --yellow: #f5e642;
+}
+
 .navbar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-  height: 70px;
-  background-color: #2563EB;
-  color: white;
+  align-items: stretch;
+  height: 56px;
+  background: rgba(6,6,8,0.97);
+  border-bottom: 2px solid #1a1a1a;
   position: sticky;
   top: 0;
   z-index: 1000;
   overflow: visible;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  padding: 0;
 }
 
-/* グリッド線の装飾 */
-.grid-lines {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background:
-    linear-gradient(90deg, transparent 19%, rgba(147, 197, 253, 0.1) 20%, transparent 21%),
-    linear-gradient(90deg, transparent 39%, rgba(147, 197, 253, 0.1) 40%, transparent 41%),
-    linear-gradient(90deg, transparent 59%, rgba(147, 197, 253, 0.1) 60%, transparent 61%),
-    linear-gradient(90deg, transparent 79%, rgba(147, 197, 253, 0.1) 80%, transparent 81%);
-  background-size: 20% 100%;
-  z-index: 0;
-  pointer-events: none;
-}
+/* グリッド線・グロー非表示 */
+.grid-lines, .glow-effect { display: none; }
 
-/* グロー効果 */
-.glow-effect {
-  position: absolute;
-  top: -80px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 300px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(147, 197, 253, 0.4) 0%, rgba(30, 64, 175, 0) 70%);
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* オレンジの線 */
+/* 赤いボトムライン */
 .navbar::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
+  bottom: 0; left: 0; right: 0;
   height: 2px;
-  background-color: #F97316;
-  z-index: 1;
+  background: var(--red);
 }
 
-/* ロゴ部分 */
+/* ロゴ */
 .logo {
   display: flex;
   align-items: center;
-  position: relative;
+  margin-right: auto;
+  padding: 0 24px;
   z-index: 10;
 }
 
 .logo-box {
   width: 40px;
-  height: 40px;
-  background-color: #F97316;
-  border-radius: 10px;
+  height: 100%;
+  background: var(--red);
   display: flex;
-  justify-content: center;
   align-items: center;
-  margin-right: 10px;
+  justify-content: center;
+  clip-path: polygon(0 0, 85% 0, 100% 100%, 0 100%);
+  padding-right: 6px;
+  border-radius: 0;
 }
 
 .logo-text {
-  font-weight: bold;
-  font-size: 26px;
-  color: #FFFFFF;
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
 }
 
 .site-name {
-  font-size: 24px;
-  font-weight: bold;
-  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
   text-decoration: none;
+  letter-spacing: 0.15em;
+  padding-left: 14px;
+  text-transform: uppercase;
 }
 
-/* ナビゲーションリンク */
+/* ナビリンク群 */
 .nav-links {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  position: relative;
+  align-items: stretch;
+  gap: 0;
   z-index: 10;
 }
 
-.nav-link {
-  text-decoration: none;
-}
+.nav-link { text-decoration: none; }
 
 .nav-btn {
-  padding: 8px 15px;
-  border-radius: 15px;
-  background-color: #1E40AF;
-  color: #93C5FD;
-  font-size: 14px;
-  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #555;
+  background: transparent;
+  border: none;
+  border-left: 1px solid #1a1a1a;
+  cursor: pointer;
+  transition: color 0.15s;
+  position: relative;
 }
 
-.nav-active .nav-btn {
-  background-color: #3B82F6;
-  color: white;
-  box-shadow: 0 0 0 2px #93C5FD;
+.nav-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--red);
+  transform: scaleX(0);
+  transition: transform 0.2s;
 }
 
-.nav-btn:hover {
-  background-color: #3B82F6;
-  color: white;
-  transform: translateY(-2px);
-}
+.nav-btn:hover,
+.nav-active .nav-btn { color: var(--white); }
+.nav-btn:hover::after,
+.nav-active .nav-btn::after { transform: scaleX(1); }
 
 /* ユーザープロフィール */
 .user-profile {
   display: flex;
   align-items: center;
-  margin-left: 15px;
+  padding: 0 16px;
+  border-left: 1px solid #1a1a1a;
+  gap: 8px;
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
-  background-color: #F97316;
-  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  background: var(--red);
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 85% 100%, 0 100%);
   display: flex;
-  justify-content: center;
   align-items: center;
-  font-weight: bold;
-  font-size: 18px;
-  color: white;
-  border: 2px solid white;
-  margin-right: 8px;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  border: none;
+  border-radius: 0;
 }
 
 .user-name {
-  font-size: 14px;
-  color: white;
+  font-size: 12px;
+  color: #888;
+  letter-spacing: 0.06em;
 }
 
 /* ログアウトボタン */
 .logout-btn {
-  padding: 8px 15px;
-  border: none;
-  border-radius: 15px;
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s;
   display: flex;
   align-items: center;
-  margin-left: 15px;
+  gap: 4px;
+  padding: 0 16px;
+  background: transparent;
+  border: none;
+  border-left: 1px solid #1a1a1a;
+  color: #555;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s;
+  clip-path: polygon(0 0, 100% 0, 94% 100%, 0 100%);
+  height: 100%;
 }
 
-.logout-btn:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-}
+.logout-btn:hover { color: var(--red); border-left-color: var(--red); }
+.logout-icon { font-size: 14px; }
 
-.logout-icon {
-  margin-left: 5px;
-  font-size: 16px;
-}
-
-/* 認証ボタン（ログイン前） */
+/* 認証ボタン（未ログイン） */
 .auth-btn {
-  padding: 8px 20px;
-  border-radius: 15px;
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-decoration: none;
-  transition: all 0.3s;
+  border-left: 1px solid #1a1a1a;
+  transition: all 0.15s;
+  height: 100%;
 }
 
-.auth-btn.login {
-  background-color: #1E40AF;
-  color: white;
-}
-
+.auth-btn.login { color: #555; }
+.auth-btn.login:hover { color: var(--white); }
 .auth-btn.register {
-  background-color: #F97316;
-  color: white;
+  background: var(--red);
+  color: #fff;
+  clip-path: polygon(0 0, 100% 0, 94% 100%, 0 100%);
+  padding-right: 24px;
 }
+.auth-btn.register:hover { background: #ff1a35; }
 
-.auth-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* ドロップダウンメニュー */
+/* ドロップダウン */
 .dropdown {
   position: relative;
-  display: inline-block;
-  z-index: 20;
+  display: flex;
+  align-items: stretch;
 }
 
 .dropdown-trigger {
   display: flex;
   align-items: center;
-  cursor: pointer;
+  height: 100%;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #555;
+  background: transparent;
   border: none;
-  font-family: inherit;
-  font-size: inherit;
+  border-left: 1px solid #1a1a1a;
+  cursor: pointer;
+  transition: color 0.15s;
+  position: relative;
 }
+
+.dropdown-trigger::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--red);
+  transform: scaleX(0);
+  transition: transform 0.2s;
+}
+
+.dropdown:hover .dropdown-trigger,
+.dropdown-trigger:focus { color: var(--white); }
+.dropdown:hover .dropdown-trigger::after { transform: scaleX(1); }
 
 .dropdown-arrow {
-  margin-left: 5px;
-  font-size: 12px;
-  transition: transform 0.3s ease;
+  margin-left: 4px;
+  font-size: 10px;
+  transition: transform 0.2s;
 }
-
-.dropdown:hover .dropdown-arrow {
-  transform: rotate(180deg);
-}
+.dropdown:hover .dropdown-arrow { transform: rotate(180deg); }
 
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 2px);
   left: 0;
   min-width: 180px;
-  background-color: #1E40AF;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  background: #0e0e12;
+  border: 1px solid #1a1a1a;
+  border-top: 2px solid var(--red);
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-10px);
-  transition: all 0.3s ease;
+  transform: translateY(-8px);
+  transition: all 0.2s;
   z-index: 9999;
-  border: 1px solid rgba(147, 197, 253, 0.2);
-  margin-top: 0;
 }
 
 .dropdown-menu.show {
@@ -344,72 +350,50 @@ export default {
 .dropdown-item {
   display: block;
   padding: 12px 16px;
-  color: #93C5FD;
+  color: #555;
   text-decoration: none;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  border-bottom: 1px solid rgba(147, 197, 253, 0.1);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid #1a1a1a;
+  transition: all 0.15s;
+  position: relative;
 }
 
-.dropdown-item:last-child {
-  border-bottom: none;
+.dropdown-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--red);
+  transform: scaleY(0);
+  transition: transform 0.15s;
 }
 
-.dropdown-item:hover {
-  background-color: #3B82F6;
-  color: white;
-  padding-left: 20px;
-}
+.dropdown-item:last-child { border-bottom: none; }
+.dropdown-item:hover { color: var(--white); padding-left: 20px; }
+.dropdown-item:hover::before { transform: scaleY(1); }
 
-.dropdown-item:first-child {
-  border-radius: 10px 10px 0 0;
-}
-
-.dropdown-item:last-child {
-  border-radius: 0 0 10px 10px;
-}
-
-/* レスポンシブデザイン */
+/* レスポンシブ */
 @media (max-width: 768px) {
   .navbar {
     flex-direction: column;
     height: auto;
-    padding: 15px;
+    padding: 12px 0;
   }
-  
-  .logo {
-    margin-bottom: 15px;
+  .logo { padding: 0 16px 10px; }
+  .nav-links { flex-wrap: wrap; padding: 0 8px; }
+  .nav-btn, .auth-btn, .logout-btn, .dropdown-trigger {
+    height: 40px;
+    font-size: 12px;
+    padding: 0 12px;
   }
-  
-  .nav-links {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  .user-profile {
-    margin: 10px 0;
-  }
-  
-  .logout-btn {
-    margin: 10px 0;
-  }
-  
   .dropdown-menu {
     position: static;
     opacity: 1;
     visibility: visible;
     transform: none;
-    box-shadow: none;
     border: none;
-    background-color: transparent;
-    margin-top: 10px;
-  }
-  
-  .dropdown-item {
-    background-color: #1E40AF;
-    margin-bottom: 5px;
-    border-radius: 10px;
-    border: none;
+    background: transparent;
   }
 }
 </style>
